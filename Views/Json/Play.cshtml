@@ -1,0 +1,46 @@
+﻿@using SL.Util
+@using SL.Data
+@{
+    
+    RequestUtil req = new RequestUtil();
+    int userid = req.Int("userid", false, "请传入用户编号");
+
+
+    if (req.HasError)
+    {
+        Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+        return;
+    }
+
+    string strNumber = SL.Web.Service.SettingService.Get("PrizePersonNumber");
+    int number = string.IsNullOrEmpty(strNumber) ? 1 : (int.Parse(strNumber) + 1);
+    SL.Web.Service.SettingService.Set("PrizePersonNumber", number.ToString());
+
+    var data = SQL.Query("select PrizeID,PrizeName,Picture,Number from Prize where Deleted!=1");
+    if (data == null)
+    {
+        //Output.Write(js.Serialize(new { success = false, msg = "未发布奖品" }));
+    }
+    else
+    {
+        foreach (var item in data)
+        {
+            string prizeNumber = item["Number"].ToString();
+            if (!string.IsNullOrEmpty(prizeNumber))
+            {
+                if (prizeNumber.Split(',').Select(a => int.Parse(a)).Contains(number))
+                {
+                    SQL.Execute("update BCUSTOMER set CTM_PRZ_ID=@p1 where CTM_ID=@p0", userid, (int)item["PrizeID"]);
+                    item["Picture"] = RequestFile.FullUrl(item["Picture"]);
+
+                    String result = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(userid + "|" + item.PrizeID + "|" + DateTime.Now.ToString("yyMMdd")));
+
+                    Json.Write(new { success = true, prize = item, result = result }, Output);
+                    return;
+                }
+            }
+        }
+    }
+    Json.Write(new { success = true, prize = false }, Output);
+    return;
+}

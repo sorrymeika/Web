@@ -1,0 +1,31 @@
+﻿@using SL.Web.Service
+<div class="header">
+    <div class="header_bg"></div>
+    <div class="header_con clearfix"><a href="@Url.Content("~/")"><img class="logo png" src="@Url.Content("/theme/images/logo.png")" /></a>
+        <ul class="header_user">
+            <li class="header_user_nav"><i class="png"></i>
+                @if (UserService.IsLogin())
+                { 
+                    <text><a href="/usercenter.html" class="">个人中心</a></text>
+                }
+                else
+                {
+                    <text><a href="/login.html">登录</a>
+                    / <a href="/register.html">注册</a></text>
+                }
+            </li>
+            <li class="header_phone"><i class="png"></i>400123123</li>
+        </ul>
+    </div>
+    <div class="nav clearfix">
+        <ul>
+            <li class="curr"><a href="/">首页</a></li>
+            <li><a href="/">关于我们</a></li>
+            <li><a href="/creation.html">课程展示</a></li>
+            <li><a href="/eco.html">名师介绍</a></li>
+            <li><a href="/gallery.html">GK Youth</a></li>
+            <li class="last"><a href="/download.html">最新资讯</a></li>
+            <li class="last"><a href="/download.html">帮助中心</a></li>
+        </ul>
+    </div>
+</div>

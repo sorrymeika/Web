@@ -1,0 +1,47 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="headerwrap">
+    <div class="index_slider">
+        <ul class="slide clearfix js_slide">
+            <li style="background-image: url(/upload/test.jpg)"></li>
+            <li style="background-image: url(/upload/test.jpg)"></li>
+            <li style="background-image: url(/upload/test.jpg)"></li>
+        </ul>
+        <ol class="js_slide_tigger">
+            <li class="curr"></li>
+            <li></li>
+            <li></li>
+        </ol>
+    </div>
+    @Html.Partial("_Header")
+    <div class="registercardwarp">
+        <div class="registercard">
+            <div class="hd">注册免费预约英语测试</div>
+            <div class="hdtip">获得您的免费测试机会</div>
+            <div class="bd">
+                <ul>
+                    <li><input placeholder="姓名" /></li>
+                    <li><input placeholder="电话" /></li>
+                    <li><input placeholder="电子邮件" /></li>
+                    <li><input placeholder="年龄" /></li>
+                </ul>
+            </div>
+            <div class="action"><input class="btn_register" type="button" value="获得您的免费测试机会" /></div>
+        </div>
+    </div>
+</div>
+<div class="boxwrap">
+    <div class="box" data-setting="images" data-name="new">
+        <div class="boxhd"><a class="more">MORE></a>最新资讯</div>
+        <div class="boxbd"></div>
+    </div>
+</div>
+<script>
+    seajs.use('manage/settings')
+</script>
+<script>
+    seajs.use(['$','lib/util','slider'],function ($,util,Slider) {
+        new Slider({ slide: '.js_slide',items: '.js_slide li',triggers: '.js_slide_tigger li' });
+    }); 
+</script>

@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/theme/style.css")" rel="Stylesheet" />
+    <!--[if lt IE 9]><link href="@Url.Content("/theme/ie.css")" rel="Stylesheet" /><![endif]-->
+    <script src="@Url.Content("/js/seajs/sea.js")"></script>
+    <!--[if IE 6]>
+    <script src="@Url.Content("/js/DD_belatedPNG_0.0.8a-min.js")" type="text/javascript"></script>
+    <script>DD_belatedPNG.fix('.png');</script>
+    <![endif]-->
+    <script>
+        seajs.config({
+            alias: {
+                "jquery": "lib/jquery-1.7.2.min",
+                "$": "lib/jquery-1.7.2.min"
+            }
+        });
+    </script>
+</head>
+<body>
+    @RenderBody()
+    <script>
+        seajs.use(['$'],function ($) {
+            if($.browser.msie) {
+                $('input[placeholder]').each(function () {
+                    var $input=$(this);
+
+                    var blur=function () {
+                        $input.val()==''&&$input.css({ color: '#999' }).val($input.attr('placeholder'));
+                    };
+                    blur();
+                    $(this).on('focus',function () {
+                        $input.val()==$input.attr('placeholder')&&$input.css({ color: '' }).val('');
+
+                    }).on('blur',blur);
+                })
+            }
+        });
+    </script>
+</body>
+</html>

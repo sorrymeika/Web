@@ -1,0 +1,89 @@
+﻿@{
+    string name = Request.QueryString["name"];
+
+    if ("add" == Request.QueryString["action"])
+    {
+        SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+        string title = req.String("title");
+        string url = req.String("url");
+        string description = req.String("description");
+        int sort = req.Int("sort");
+        var pic = req.File("src", false, "请上传图片");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Image>(name);
+        settingUtil.Add(new SL.Web.Model.Image
+        {
+            Title = title,
+            Sort = sort,
+            Src = pic.Save(),
+            Url = url,
+            Description = description
+        }, "ID");
+
+
+        SL.Util.HtmlUtil.Output(new { success = true });
+        return;
+    }
+
+    ViewBag.Title = "图片管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
+}
+<div id="form"></div>
+<script>
+    seajs.use(['jquery','lib/util','lib/form','lib/grid','lib/global.css'],function ($,_,Form) {
+        var form=new Form($('#form'),{
+            title: "图片添加",
+            url: '?action=add&name='+_.queryString('name'),
+            controls: {
+                title: {
+                    type: 'text',
+                    label: '标题',
+                    emptyAble: false,
+                    emptyText: '请填写标题'
+                },
+                url: {
+                    type: 'text',
+                    label: '链接地址'
+                },
+                src: {
+                    type: 'file',
+                    label: '上传图片',
+                    emptyAble: false,
+                    emptyText: '请选择图片'
+                },
+                description: {
+                    type: 'textarea',
+                    label: '图片描述'
+                },
+                sort: {
+                    type: 'number',
+                    label: '排序',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '提交',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success) {
+                            location.href="/manage/media/images?name="+_.queryString('name')
+                        } else
+                            alert(res.msg);
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    location.href="/manage/media/images?name="+_.queryString('name')
+                }
+            }]
+        });
+
+    });
+</script>

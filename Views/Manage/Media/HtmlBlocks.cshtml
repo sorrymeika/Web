@@ -1,0 +1,86 @@
+﻿@{
+    ViewBag.Title = "";
+    Layout = "~/Areas/Manage/Views/Shared/_Layout.cshtml";
+}
+@section header{
+    <style type="text/css">
+        #grid { margin-top: 10px; }
+    </style>
+    <script type="text/javascript">
+        resizePopup(580,350);
+        $.ready(function () {
+            var buttons=Manage.Buttons("toolbar",[{
+                text: "添加",
+                ico: "ico2",
+                handle: function () {
+                    window.location.href="/Manage/Media/AddHtmlBlock/?name="+$("?name");
+                }
+            },{
+                text: "修改",
+                ico: "ico3",
+                disabled: true,
+                handle: function () {
+                    var row=grid.getSelectedRow();
+                    if(row) {
+                        window.location.href="/Manage/Media/ModifyHtmlBlock/?name="+$("?name")+"&id="+row.data.ID;
+                    } else
+                        alert("请选择一行来修改");
+                }
+            }]);
+
+            var grid=new $.Grid({
+                id: "grid",
+                onRowSelect: function () {
+                    buttons.enable(1);
+                },
+                columns: [{
+                    width: 10,
+                    header: "描述",
+                    type: "custom",
+                    align: "left",
+                    custom: function (cell,data) {
+                        cell.html(data.Description);
+                    }
+                },{
+                    width: 5,
+                    header: "排序",
+                    align: "left",
+                    columnName: "Sort"
+                },{
+                    width: 5,
+                    header: "删除",
+                    columnName: "ID",
+                    type: "custom",
+                    custom: function (cell,data) {
+                        cell.add("A").on("click",function () {
+                            if(window.confirm("您确定要删除该HTML块吗？")) {
+                                $.post("/Manage/Media/DeleteHtmlBlock/",function (res) {
+                                    if(res.success) {
+                                        load();
+                                        alert("删除成功！");
+
+                                    } else
+                                        alert(res.msg)
+                                },{
+                                    id: data.ID,
+                                    name: $("?name")
+                                });
+                            }
+                        }).html("[删除]").css("color:#c00").attr("href","javascript:;");
+                    }
+                }]
+            }),
+            load=function () {
+                grid.load("/Manage/Media/GetHtmlBlocks",{
+                    name: $("?name")
+                },function () {
+                    buttons.disable(1);
+                });
+            };
+            load();
+        });
+    </script>
+}
+<h2>HTML块管理</h2>
+<div id="toolbar" class="toolbar"></div>
+<div id="grid"></div>

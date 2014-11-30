@@ -1,0 +1,114 @@
+﻿@using SL.Util
+@using SL.Web.Service
+@{
+    var setting = AlipaySetting.getInstance();
+    var req = new RequestUtil();
+
+    string partner = req.String("partner");
+
+    if (Request["action"] == "direct")
+    {
+        string key = req.String("key");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        setting.Direct_Partner = partner;
+        setting.Direct_Key = key;
+
+        Json.Write(new { success = true }, Output);
+        return;
+    }
+    else if (Request["action"] == "wap")
+    {
+        string private_key = req.String("private_key");
+        string public_key = req.String("public_key");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        setting.WAP_Partner = partner;
+        setting.WAP_Private_key = private_key;
+        setting.WAP_Public_key = public_key;
+
+        Json.Write(new { success = true }, Output);
+        return;
+    }
+
+    Layout = "~/Views/Shared/_ManageLayout.cshtml";
+}
+<div id="form"></div>
+<div id="form1"></div>
+<script>
+    seajs.use(['jquery','lib/form','lib/global.css'],function ($) {
+
+        var form=$('#form').form({
+            title: "支付宝快捷支付配置",
+            url: '?action=direct',
+            controls: {
+                partner: {
+                    label: '合作者身份ID',
+                    type: 'text',
+                    value: '@setting.Direct_Partner'
+                },
+                key: {
+                    label: '交易安全校验码',
+                    type: 'text',
+                    value: '@setting.Direct_Key'
+                }
+            },
+            buttons: [{
+                value: '设置',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success)
+                            alert('修改成功！');
+                        else
+                            alert(res.msg);
+                    });
+                }
+            }]
+        });
+
+        var form1=$('#form1').form({
+            title: "支付宝(WAP)支付配置",
+            url: '?action=wap',
+            controls: {
+                partner: {
+                    label: '合作者身份ID',
+                    type: 'text',
+                    value: '@setting.WAP_Partner'
+                },
+                private_key: {
+                    label: '商户的私钥',
+                    type: 'text',
+                    value: '@setting.WAP_Private_key'
+                },
+                public_key: {
+                    label: '支付宝的公钥',
+                    type: 'text',
+                    value: '@setting.WAP_Public_key'
+                }
+            },
+            buttons: [{
+                value: '设置',
+                click: function () {
+                    form1.submit(function (res) {
+                        if(res.success)
+                            alert('修改成功！');
+                        else
+                            alert(res.msg);
+
+                    });
+                }
+            }]
+        });
+
+    });
+</script>

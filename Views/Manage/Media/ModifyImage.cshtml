@@ -1,0 +1,100 @@
+﻿@{
+    SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+    int id = req.Int("id", false, "need id");
+    string name = Request.QueryString["name"];
+    var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Image>(name);
+    var data = settingUtil.FirstOrDefault(a => a.ID == id);
+
+    if ("modify" == Request.QueryString["action"])
+    {
+        string title = req.String("title");
+        string url = req.String("url");
+        string description = req.String("description");
+        int sort = req.Int("sort");
+        var pic = req.File("src");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+
+        if (!pic.IsEmpty)
+        {
+            SL.Util.RequestFile.Delete(data.Src);
+            data.Src = pic.Save();
+        }
+
+        data.Title = title;
+        data.Url = url;
+        data.Description = description;
+        data.Sort = sort;
+
+        settingUtil.Save();
+
+        SL.Util.HtmlUtil.Output(new { success = true });
+        return;
+    }
+
+    ViewBag.Title = "图片管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
+}
+<div id="form"></div>
+<script>
+    seajs.use(['jquery','lib/util','lib/form','lib/grid','lib/global.css'],function ($,_,Form) {
+        var form=new Form($('#form'),{
+            title: "图片修改",
+            url: '?action=modify&id=@(id)&name='+_.queryString('name'),
+            controls: {
+                title: {
+                    type: 'text',
+                    label: '标题',
+                    value: "@data.Title",
+                    emptyAble: false,
+                    emptyText: '请填写标题'
+                },
+                url: {
+                    type: 'text',
+                    value: "@data.Url",
+                    label: '链接地址'
+                },
+                src: {
+                    type: 'file',
+                    label: '上传图片',
+                    emptyAble: false,
+                    emptyText: '请选择图片'
+                },
+                description: {
+                    value: "@data.Description",
+                    type: 'textarea',
+                    label: '图片描述'
+                },
+                sort: {
+                    value: "@data.Sort",
+                    type: 'number',
+                    label: '排序',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '提交',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success) {
+                            alert('修改成功');
+                            location.href="/manage/media/images?name="+_.queryString('name')
+                        } else
+                            alert(res.msg);
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    location.href="/manage/media/images?name="+_.queryString('name')
+                }
+            }]
+        });
+
+    });
+</script>

@@ -1,0 +1,17 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewBag.Title</title>
+    <script src="@Url.Content("~/js/seajs/sea.js")" type="text/javascript"></script>
+    <script>
+        seajs.config({
+            alias: {
+                "jquery": "lib/jquery-1.7.2.min"
+            }
+        });
+    </script>
+</head>
+<body>
+    @RenderBody()
+</body>
+</html>
