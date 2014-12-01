@@ -1,55 +1,82 @@
 ﻿@{
-    ViewBag.Title = "";
-    Layout = "~/Areas/Manage/Views/Shared/_Layout.cshtml";
-}
-@model AbsTouch.Models.HtmlBlockModel
-@section header{
-    <script type="text/javascript">
-        resizePopup(650,460);
+    SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+    int id = req.Int("id", false, "need id");
+    string name = Request.QueryString["name"];
+    var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.HtmlBlock>(name + "HtmlBlock");
+    var data = settingUtil.FirstOrDefault(a => a.ID == id);
 
-        $.ready(function () {
-            var vld=new $.Validation([{
-                id: "desc",
-                emptyAble: false,
-                emptyText: "请填写描述"
-            },{
-                id: "content",
-                emptyAble: false,
-                emptyText: "请填写正文"
-            },{
-                id: "sort",
-                emptyAble: false,
-                emptyText: "请填写排序",
-                regex: /^\d+$/,
-                regexText: "必须是数字"
-            }]);
-            $("form1").onsubmit=function () {
-                return vld.validate();
-            }
-        });
-    </script>
+    if ("modify" == Request.QueryString["action"])
+    {
+        string title = req.String("title");
+        string content = req.String("content");
+        int sort = req.Int("sort");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        data.Title = title;
+        data.Content = content;
+        data.Sort = sort;
+
+        settingUtil.Save();
+
+        SL.Util.HtmlUtil.Output(new { success = true });
+        return;
+    }
+
+    ViewBag.Title = "图片管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
 }
-<h2>修改HTML块</h2>
-<form id="form1" action="" method="post" enctype="multipart/form-data">
-<input type="hidden" id="id" name="id" value="@(Model.ID)" />
-<input type="hidden" id="name" name="name" value="@(Request.QueryString["name"])" />
-<table class="form">
-    <tr>
-        <td><i>*</i>描述：</td>
-        <td><input type="text" id="desc" name="desc" value="@(Model.Description)" /></td>
-    </tr>
-    <tr>
-        <td><i>*</i>排序：</td>
-        <td><input type="text" id="sort" name="sort"  value="@(Model.Sort)"/></td>
-    </tr>
-    <tr>
-        <td valign="top"><i>*</i>内容：</td>
-        <td><textarea id="content" name="content">@(Model.Content)</textarea></td>
-    </tr>
-    <tr>
-        <td colspan="2" class="buttons"><input type="submit" value="修改" class="button" />
-            <input type="button" value="返回" class="button" onclick="window.location.href='/Manage/Media/HtmlBlocks/?name=@(Request.QueryString["name"])'" />
-        </td>
-    </tr>
-</table>
-</form>
+<div id="form"></div>
+<script>
+var content=@(new MvcHtmlString(Json.Encode(data.Content)));
+</script>
+<script>
+    seajs.use(['jquery','lib/util','lib/form','lib/grid','lib/global.css'],function ($,_,Form) {
+        var form=new Form($('#form'),{
+            title: "图片修改",
+            url: '?action=modify&id=@(id)&name='+_.queryString('name'),
+            controls: {
+                title: {
+                    type: 'text',
+                    label: '标题',
+                    value: "@data.Title",
+                    emptyAble: false,
+                    emptyText: '请填写标题'
+                },
+                content: {
+                    value: content,
+                    type: 'html',
+                    label: '内容'
+                },
+                sort: {
+                    value: "@data.Sort",
+                    type: 'number',
+                    label: '排序',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '提交',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success) {
+                            alert('修改成功');
+                            location.href="/manage/media/images?name="+_.queryString('name')
+                        } else
+                            alert(res.msg);
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    location.href="/manage/media/images?name="+_.queryString('name')
+                }
+            }]
+        });
+
+    });
+</script>

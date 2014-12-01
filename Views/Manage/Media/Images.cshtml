@@ -1,6 +1,6 @@
 ﻿@{
     string name = Request.QueryString["name"];
-    var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Image>(name);
+    var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Image>(name + "Image");
 
     if ("get" == Request.QueryString["action"])
     {

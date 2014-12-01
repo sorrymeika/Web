@@ -24,7 +24,7 @@
             else
             {
                 SessionUtil.Set("Admin", adminName);
-                Response.Redirect(string.IsNullOrEmpty(Request.QueryString["r"]) ? Url.Content("~/Manage/ModifyPwd") : HttpUtility.UrlDecode(Request.QueryString["r"]));
+                Response.Redirect(string.IsNullOrEmpty(Request.QueryString["r"]) ? Url.Content("~/Manage/Admin/ModifyPwd") : HttpUtility.UrlDecode(Request.QueryString["r"]));
                 return;
             }
         }

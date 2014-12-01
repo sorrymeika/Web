@@ -6,7 +6,6 @@ using System.Web.Mvc;
 using SL.Web.Service;
 using System.IO;
 using System.Globalization;
-using System.Web.Script.Serialization;
 using System.Drawing;
 using SL.Util;
 using System.Collections.Specialized;
@@ -28,6 +27,7 @@ namespace SL.Web.Controllers
             return View("~/Views/Json/" + catalog + (string.IsNullOrEmpty(handle) ? "" : "/" + handle) + ".cshtml");
         }
 
+        [ValidateInput(false)]
         public ActionResult Manage(string catalog, string handle = null)
         {
             string admin = SessionUtil.Get<string>("Admin");
@@ -42,6 +42,12 @@ namespace SL.Web.Controllers
                     return Redirect(Url.Content("~/Manage/Login") + "?r=" + HttpUtility.UrlEncode(Request.Url.OriginalString));
                 }
             }
+
+            if ("upload".Equals(catalog, StringComparison.OrdinalIgnoreCase))
+            {
+                return Upload(Request["dir"]);
+            }
+
             return View("~/Views/Manage/" + catalog + (string.IsNullOrEmpty(handle) ? "" : ("/" + handle)) + ".cshtml");
         }
         #endregion

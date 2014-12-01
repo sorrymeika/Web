@@ -6,14 +6,31 @@ namespace SL.Web.Service
 {
     public class SettingService
     {
-        public static void Set(string name, string value)
+        public static IList<SL.Web.Model.Image> GetImages(string name)
         {
-            SL.Data.SQL.Execute("if exists (select 1 from Settings where Name=@p0) update Settings set Value=@p1 where Name=@p0 else insert into Settings (Name,Value) values (@p0,@p1)", name, value);
+            var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Image>(name + "Image");
+
+            var data = settingUtil.Get();
+
+            if (null != data)
+            {
+                data.All(a =>
+                {
+                    a.Src = SL.Util.RequestFile.GetCompressedImageSrc(a.Src);
+                    return true;
+                });
+            }
+
+            return data;
         }
 
-        public static string Get(string key)
+        public static IList<SL.Web.Model.Link> GetLinks(string name)
         {
-            return SL.Data.SQL.QueryValue<string>("select Value from Settings where Name=@p0", key);
+            var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Link>(name + "Link");
+
+            var data = settingUtil.Get();
+
+            return data;
         }
     }
 }

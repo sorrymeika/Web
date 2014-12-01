@@ -1,0 +1,275 @@
+﻿@using SL.Util
+@using SL.Data
+@{
+    RequestUtil req = new RequestUtil();
+
+    if ("add" == Request.QueryString["action"])
+    {
+        string categoryName = req.String("categoryName", false, "need categoryName");
+        int parentid = req.Int("parentid");
+        int sort = req.Int("sort");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        if (SQL.Exists("select 1 from NewsCategory where CategoryName=@p0 and ParentID=@p1", categoryName, parentid))
+        {
+            Json.Write(new { success = false, msg = "类别已存在" }, Output);
+            return;
+        }
+
+        SQL.Execute("insert into NewsCategory (CategoryName,ParentID,Sort) values (@p0,@p1,@p2)", categoryName, parentid, sort);
+
+        Json.Write(new { success = true }, Output);
+        return;
+    }
+    else if ("modify" == Request.QueryString["action"])
+    {
+        int id = req.Int("id", false, "need id");
+        string categoryName = req.String("categoryName", false, "need categoryName");
+        int sort = req.Int("sort");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        SQL.Execute("update NewsCategory set CategoryName=@p1,Sort=@p2 where CategoryID=@p0", id, categoryName, sort);
+
+        Json.Write(new { success = true }, Output);
+        return;
+    }
+    else if ("delete" == Request.QueryString["action"])
+    {
+        int id = req.Int("id", false, "need id");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        using (Database db = Database.Open())
+        {
+            db.Execute("delete NewsCategory where CategoryID=@p0", id);
+            db.Execute("delete News where CategoryID in (select CategoryID from NewsCategory where ParentID=@p0)", id);
+            db.Execute("delete NewsCategory where ParentID=@p0", id);
+        }
+
+        Json.Write(new { success = true }, Output);
+        return;
+    }
+    else if ("get" == Request.QueryString["action"])
+    {
+        var data = SQL.Query("select CategoryID,CategoryName,ParentID,Deletable,Sort from NewsCategory order by Sort desc,CategoryID asc");
+
+        List<dynamic> result = data == null ? null : data.Where(a => a.ParentID == 0).ToList();
+
+        if (null != result)
+        {
+            result.All(a =>
+            {
+                a.children = data.Where(b => (int)b.ParentID == (int)a.CategoryID).ToList();
+                return true;
+            });
+        }
+
+        Json.Write(new { success = true, data = result }, Output);
+        return;
+    }
+    ViewBag.Title = "";
+    Layout = "~/Views/Shared/_ManageLayout.cshtml";
+}
+<h1>新闻分类管理</h1>
+<div id="toolbar" class="toolbar"></div>
+<div id="grid"></div>
+<script>
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+
+        //添加
+        var addingDialog=new popup.Form({
+            url: '?action=add',
+            title: '添加分类',
+            width: 520,
+            controls: {
+                parentid: {
+                    type: 'hidden'
+                },
+                categoryName: {
+                    label: '类别名',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写类别名'
+                },
+                sort: {
+                    label: '排序',
+                    type: 'number',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '添加',
+                click: function () {
+                    addingDialog.submit({
+                        beforeSend: function () {
+                        },
+                        success: function (res) {
+                            if(res.success) {
+                                addingDialog.hide().reset();
+                                grid.search();
+                            } else
+                                alert(res.msg);
+                        },
+                        error: function () {
+                        }
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    addingDialog.hide();
+                }
+            }]
+        });
+
+        //修改
+        var modifyingDialog=new popup.Form({
+            url: '?action=modify',
+            title: '修改分类',
+            width: 520,
+            controls: {
+                id: {
+                    type: 'hidden'
+                },
+                categoryName: {
+                    label: '类别名',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写类别名'
+                },
+                sort: {
+                    label: '排序',
+                    type: 'number'
+                }
+            },
+            buttons: [{
+                text: '修改',
+                click: function () {
+                    modifyingDialog.submit({
+                        beforeSend: function () {
+                        },
+                        success: function (res) {
+                            if(res.success) {
+                                modifyingDialog.hide().reset();
+                                grid.search();
+                            } else
+                                alert(res.msg);
+                        },
+                        error: function () {
+                        }
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    modifyingDialog.hide();
+                }
+            }]
+        });
+
+        var buttons=new Buttons("#toolbar",[{
+            text: "添加父类",
+            ico: 'add',
+            click: function () {
+
+                addingDialog.control("parentid").val(0);
+                addingDialog.show();
+            }
+        },{
+            text: "添加子类",
+            ico: 'add',
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().data;
+                addingDialog.control("parentid").val(data.CategoryID);
+                addingDialog.show();
+            }
+        },{
+            text: "修改",
+            ico: "modify",
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().data;
+                modifyingDialog.control("id").val(data.CategoryID);
+                modifyingDialog.control("categoryName").val(data.CategoryName);
+                modifyingDialog.control("sort").val(data.Sort);
+                modifyingDialog.show();
+            }
+        },{
+            text: "删除",
+            ico: "delete",
+            disabled: true,
+            click: function () {
+                if(!window.confirm('确认删除该分类和该分类下的所有新闻？')) return;
+                var data=grid.selectedRow().data;
+
+                $.ajax({
+                    url: '?action=delete',
+                    type: 'post',
+                    data: {
+                        id: data.CategoryID
+                    },
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.success) {
+                            alert('删除成功！');
+                            grid.search();
+                        } else
+                            alert(res.msg);
+                    }
+                });
+
+            }
+        }]);
+
+        var grid=$('#grid').grid({
+            type: 'tree',
+            search: {
+                beforeSend: function () {
+                    buttons.items([1,2,3]).disable();
+                },
+                url: '?action=get'
+            },
+            onRowSelect: function (row,data) {
+                buttons.items([1,2,3]).disable();
+
+                var enabled=[2];
+                data.ParentID==0&&enabled.push(1);
+                !data.Deletable&&enabled.push(3);
+
+                buttons.items(enabled).enable();
+            },
+            columns: [{
+                text: '类别编号',
+                bind: 'CategoryID',
+                width: 5
+            },{
+                text: '类别名称',
+                bind: 'CategoryName',
+                width: 20
+            },{
+                text: '是否可删',
+                bind: 'Deletable',
+                width: 5,
+                render: function (cell,data) {
+                    cell.append(data.Deletable?"&nbsp;是":"&nbsp;否");
+                }
+            }]
+        }).search();
+
+    });
+</script>

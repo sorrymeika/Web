@@ -119,7 +119,6 @@
 
     var tmpl=function (html,data) {
         var fn=buildTmplFn(html);
-        console.log(data);
         return fn($,{
             data: data,
             nest: function (s,d) {
@@ -128,7 +127,6 @@
         });
     },
     template=function (html,data) {
-        console.log(data);
         var result;
         if($.isArray(data)) {
             result=[];

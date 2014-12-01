@@ -1,53 +1,81 @@
 ﻿@{
-    ViewBag.Title = "";
-    Layout = "~/Areas/Manage/Views/Shared/_Layout.cshtml";
-}
-@section header{
-    <script type="text/javascript">
-        resizePopup(350,190);
+    string name = Request.QueryString["name"];
 
-        $.ready(function () {
-            var vld=new $.Validation([{
-                id: "desc",
-                emptyAble: false,
-                emptyText: "请填写描述"
-            },{
-                id: "url",
-                emptyAble: false,
-                emptyText: "请填写链接地址"
-            },{
-                id: "sort",
-                emptyAble: false,
-                emptyText: "请填写排序",
-                regex: /^\d+$/,
-                regexText: "必须是数字"
-            }]);
-            $("form1").onsubmit=function () {
-                return vld.validate();
-            }
-        });
-    </script>
+    if ("add" == Request.QueryString["action"])
+    {
+        SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+        string title = req.String("title");
+        string url = req.String("url");
+        string description = req.String("description");
+        int sort = req.Int("sort");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Link>(name + "Link");
+        settingUtil.Add(new SL.Web.Model.Link
+        {
+            Title = title,
+            Sort = sort,
+            Url = url,
+            Description = description
+        }, "ID");
+
+
+        SL.Util.HtmlUtil.Output(new { success = true });
+        return;
+    }
+
+    ViewBag.Title = "文字链管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
 }
-<h2>添加链接</h2>
-<form id="form1" action="" method="post" enctype="multipart/form-data">
-<input type="hidden" id="name" name="name" value="@(Request.QueryString["name"])" />
-<table class="form">
-    <tr>
-        <td><i>*</i>描述：</td>
-        <td><input type="text" id="desc" name="desc" /></td>
-    </tr>
-    <tr>
-        <td><i>*</i>排序：</td>
-        <td><input type="text" id="sort" name="sort" value="0" /></td>
-    </tr>
-    <tr>
-        <td><i>*</i>链接：</td>
-        <td><input id="url" name="url" /></td>
-    </tr>
-    <tr>
-        <td colspan="2" class="buttons"><input type="submit" value="添加" class="button" />
-            <input type="button" value="返回" class="button" onclick="window.location.href='/Manage/Media/HtmlBlocks/?name=@(Request.QueryString["name"])'" />
-        </td>
-    </tr>
-</table>
-</form>
+<div id="form"></div>
+<script>
+    seajs.use(['jquery','lib/util','lib/form','lib/grid','lib/global.css'],function ($,_,Form) {
+        var form=new Form($('#form'),{
+            title: "文字链添加",
+            url: '?action=add&name='+_.queryString('name'),
+            controls: {
+                title: {
+                    type: 'text',
+                    label: '标题',
+                    emptyAble: false,
+                    emptyText: '请填写标题'
+                },
+                url: {
+                    type: 'text',
+                    label: '链接地址'
+                },
+                description: {
+                    type: 'textarea',
+                    label: '描述'
+                },
+                sort: {
+                    type: 'number',
+                    label: '排序',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '提交',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success) {
+                            location.href="/manage/media/links?name="+_.queryString('name')
+                        } else
+                            alert(res.msg);
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    location.href="/manage/media/links?name="+_.queryString('name')
+                }
+            }]
+        });
+
+    });
+</script>

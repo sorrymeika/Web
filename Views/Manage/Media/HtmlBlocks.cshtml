@@ -1,86 +1,99 @@
 ﻿@{
-    ViewBag.Title = "";
-    Layout = "~/Areas/Manage/Views/Shared/_Layout.cshtml";
-}
-@section header{
-    <style type="text/css">
-        #grid { margin-top: 10px; }
-    </style>
-    <script type="text/javascript">
-        resizePopup(580,350);
-        $.ready(function () {
-            var buttons=Manage.Buttons("toolbar",[{
-                text: "添加",
-                ico: "ico2",
-                handle: function () {
-                    window.location.href="/Manage/Media/AddHtmlBlock/?name="+$("?name");
-                }
-            },{
-                text: "修改",
-                ico: "ico3",
-                disabled: true,
-                handle: function () {
-                    var row=grid.getSelectedRow();
-                    if(row) {
-                        window.location.href="/Manage/Media/ModifyHtmlBlock/?name="+$("?name")+"&id="+row.data.ID;
-                    } else
-                        alert("请选择一行来修改");
-                }
-            }]);
+    string name = Request.QueryString["name"];
+    var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.HtmlBlock>(name + "HtmlBlock");
 
-            var grid=new $.Grid({
-                id: "grid",
-                onRowSelect: function () {
-                    buttons.enable(1);
-                },
-                columns: [{
-                    width: 10,
-                    header: "描述",
-                    type: "custom",
-                    align: "left",
-                    custom: function (cell,data) {
-                        cell.html(data.Description);
-                    }
-                },{
-                    width: 5,
-                    header: "排序",
-                    align: "left",
-                    columnName: "Sort"
-                },{
-                    width: 5,
-                    header: "删除",
-                    columnName: "ID",
-                    type: "custom",
-                    custom: function (cell,data) {
-                        cell.add("A").on("click",function () {
-                            if(window.confirm("您确定要删除该HTML块吗？")) {
-                                $.post("/Manage/Media/DeleteHtmlBlock/",function (res) {
-                                    if(res.success) {
-                                        load();
-                                        alert("删除成功！");
+    if ("get" == Request.QueryString["action"])
+    {
+        var data = settingUtil.Get();
 
-                                    } else
-                                        alert(res.msg)
-                                },{
-                                    id: data.ID,
-                                    name: $("?name")
-                                });
-                            }
-                        }).html("[删除]").css("color:#c00").attr("href","javascript:;");
-                    }
-                }]
-            }),
-            load=function () {
-                grid.load("/Manage/Media/GetHtmlBlocks",{
-                    name: $("?name")
-                },function () {
-                    buttons.disable(1);
-                });
-            };
-            load();
-        });
-    </script>
+        Json.Write(new { success = true, data = data }, Output);
+        return;
+    }
+    else if ("delete" == Request.QueryString["action"])
+    {
+        int id = int.Parse(Request.Form["id"]);
+
+        var data = settingUtil.FirstOrDefault(a => a.ID == id);
+        settingUtil.Delete(data);
+
+        Json.Write(new { success = true, data = true }, Output);
+        return;
+    }
+
+    ViewBag.Title = "HTML管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
 }
-<h2>HTML块管理</h2>
+<h1>HTML管理</h1>
 <div id="toolbar" class="toolbar"></div>
 <div id="grid"></div>
+<script type="text/javascript">
+
+    seajs.use(['jquery','lib/util','lib/buttons','lib/grid','lib/global.css'],function ($,_,Buttons) {
+
+        var buttons=new Buttons("#toolbar",[{
+            text: "添加",
+            ico: 'add',
+            click: function () {
+                location.href="/manage/media/addHtmlBlock?name="+_.queryString('name');
+            }
+        },{
+            text: "修改",
+            ico: "modify",
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().data;
+                location.href="/manage/media/modifyHtmlBlock?name="+_.queryString('name')+"&id="+data.ID;
+            }
+        },{
+            text: "删除",
+            ico: "delete",
+            disabled: true,
+            click: function () {
+                if(!window.confirm('确认删除？')) return;
+                var data=grid.selectedRow().data;
+
+                $.ajax({
+                    url: '?action=delete',
+                    type: 'post',
+                    data: {
+                        id: data.ID
+                    },
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.success) {
+                            alert('删除成功！');
+                            grid.search();
+                        } else
+                            alert(res.msg);
+                    }
+                });
+            }
+        }]);
+
+        var grid=$('#grid').grid({
+            search: {
+                beforeSend: function () {
+                    buttons.items([1,2]).disable();
+                },
+                url: '?action=get&name='+_.queryString('name')
+            },
+            rowHeight: 100,
+            onRowSelect: function (row,data) {
+                buttons.items([1,2]).enable();
+            },
+            columns: [{
+                text: '编号',
+                bind: 'ID',
+                width: 4
+            },{
+                text: '标题',
+                bind: 'Title',
+                width: 10
+            },{
+                text: '排序',
+                bind: 'Sort',
+                width: 4
+            }]
+        }).search();
+    });
+</script>

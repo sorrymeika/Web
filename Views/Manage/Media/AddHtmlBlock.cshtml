@@ -1,53 +1,76 @@
 ﻿@{
-    ViewBag.Title = "";
-    Layout = "~/Views/Shared/_ManageLayout.cshtml";
-}
-@section header{
-    <script type="text/javascript">
-        resizePopup(650,460);
+    string name = Request.QueryString["name"];
 
-        $.ready(function () {
-            var vld=new $.Validation([{
-                id: "desc",
-                emptyAble: false,
-                emptyText: "请填写描述"
-            },{
-                id: "content",
-                emptyAble: false,
-                emptyText: "请填写正文"
-            },{
-                id: "sort",
-                emptyAble: false,
-                emptyText: "请填写排序",
-                regex: /^\d+$/,
-                regexText: "必须是数字"
-            }]);
-            $("form1").onsubmit=function () {
-                return vld.validate();
-            }
-        });
-    </script>
+    if ("add" == Request.QueryString["action"])
+    {
+        SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+        string title = req.String("title");
+        string url = req.String("url");
+        string content = req.String("content");
+        int sort = req.Int("sort");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.HtmlBlock>(name + "HtmlBlock");
+        settingUtil.Add(new SL.Web.Model.HtmlBlock
+        {
+            Title = title,
+            Sort = sort,
+            Content = content
+        }, "ID");
+
+
+        SL.Util.HtmlUtil.Output(new { success = true });
+        return;
+    }
+
+    ViewBag.Title = "HTML管理";
+    Layout = "~/Views/Shared/_IFrameLayout.cshtml";
 }
-<h2>添加HTMl块</h2>
-<form id="form1" action="" method="post" enctype="multipart/form-data">
-<input type="hidden" id="name" name="name" value="@(Request.QueryString["name"])" />
-<table class="form">
-    <tr>
-        <td><i>*</i>描述：</td>
-        <td><input type="text" id="desc" name="desc" /></td>
-    </tr>
-    <tr>
-        <td><i>*</i>排序：</td>
-        <td><input type="text" id="sort" name="sort" value="0" /></td>
-    </tr>
-    <tr>
-        <td valign="top"><i>*</i>内容：</td>
-        <td><textarea id="content" name="content"></textarea></td>
-    </tr>
-    <tr>
-        <td colspan="2" class="buttons"><input type="submit" value="添加" class="button" />
-            <input type="button" value="返回" class="button" onclick="window.location.href='/Manage/Media/HtmlBlocks/?name=@(Request.QueryString["name"])'" />
-        </td>
-    </tr>
-</table>
-</form>
+<div id="form"></div>
+<script>
+    seajs.use(['jquery','lib/util','lib/form','lib/grid','lib/global.css'],function ($,_,Form) {
+        var form=new Form($('#form'),{
+            title: "HTML添加",
+            url: '?action=add&name='+_.queryString('name'),
+            controls: {
+                title: {
+                    type: 'text',
+                    label: '标题',
+                    emptyAble: false,
+                    emptyText: '请填写标题'
+                },
+                content: {
+                    type: 'html',
+                    label: '内容'
+                },
+                sort: {
+                    type: 'number',
+                    label: '排序',
+                    value: 0
+                }
+            },
+            buttons: [{
+                text: '提交',
+                click: function () {
+                    form.submit(function (res) {
+                        if(res.success) {
+                            location.href="/manage/media/htmlblocks?name="+_.queryString('name')
+                        } else
+                            alert(res.msg);
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    location.href="/manage/media/htmlblocks?name="+_.queryString('name')
+                }
+            }]
+        });
+
+    });
+</script>
