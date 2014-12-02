@@ -1,10 +1,10 @@
-﻿define(function (require,exports,module) {
+﻿define(function(require,exports,module) {
     var $=require('jquery'),
         util=require('lib/util'),
         V=require('lib/validation'),
         Buttons=require('lib/buttons');
 
-    var ControlBase=function (form,options) {
+    var ControlBase=function(form,options) {
         var me=this,
             opt=$.extend(true,{
                 label: '',
@@ -23,11 +23,11 @@
     }
 
     ControlBase.prototype={
-        create: function () {
+        create: function() {
         }
     };
 
-    var Control=function (form,options) {
+    var Control=function(form,options) {
         var me=this,
             opt=$.extend(true,{
                 label: '',
@@ -73,7 +73,7 @@
 
             if(type=='grid') {
                 td.css({ paddingTop: 0 });
-                seajs.use('lib/grid',function (Grid) {
+                seajs.use('lib/grid',function(Grid) {
                     me._input=new Grid(td,opt.options);
                 });
             } else {
@@ -118,7 +118,7 @@
 
                     inputValid&&!inputValid.position&&(inputValid.position='dock-bottom:this.parent()');
 
-                    seajs.use('kindeditor/kindeditor-min',function (K) {
+                    seajs.use('kindeditor/kindeditor-min',function(K) {
                         var editor=K.create(input[0],$.extend({
                             uploadJson: "/manage/upload",
                             allowFileManager: false,
@@ -133,7 +133,7 @@
                         input=$('<textarea name="'+name+'" class="text"></textarea>');
                     } else if(opt.type=="calendar") {
                         input=$('<input name="'+name+'" class="text_normal" type="text"/>');
-                        seajs.use(['lib/jquery.datepicker','lib/jquery.datepicker.css'],function () {
+                        seajs.use(['lib/jquery.datepicker','lib/jquery.datepicker.css'],function() {
                             input.datePicker($.extend(opt.options,{
                                 clickInput: true,
                                 verticalOffset: 4
@@ -142,16 +142,16 @@
                     } else if(opt.type=="select") {
                         input=$('<select name="'+name+'"></select>');
 
-                        var addOption=function (text,value) {
+                        var addOption=function(text,value) {
                             if(typeof value==='undefined') {
                                 if($.isArray(text))
-                                    $.each(text,function (j,selopt) {
+                                    $.each(text,function(j,selopt) {
                                         addOption(selopt);
                                     });
                                 else
                                     addOption(text.text,text.value);
                             } else
-                                input.each(function () {
+                                input.each(function() {
                                     this.options.add(new Option(text,value));
                                 });
                         }
@@ -170,7 +170,7 @@
         }
 
         if(opt.events) {
-            $.each(opt.events,function (evt,f) {
+            $.each(opt.events,function(evt,f) {
                 var arr=evt.split(' '),
                     events=arr.shift();
 
@@ -198,17 +198,17 @@
     };
 
     Control.prototype={
-        hide: function () {
+        hide: function() {
             var row=this._row;
             row&&row.hide();
             return this;
         },
-        show: function () {
+        show: function() {
             var row=this._row;
             row&&row.show();
             return this;
         },
-        control: function () {
+        control: function() {
             var control=this.type=="editor"?this.editor:this._input,
                 args=Array.apply([],arguments);
 
@@ -225,7 +225,7 @@
 
             return this;
         },
-        val: function (val) {
+        val: function(val) {
             var input=this._input;
 
             if(!input) return;
@@ -234,7 +234,7 @@
             input.val(val);
             return this;
         },
-        html: function (val) {
+        html: function(val) {
             var input=this._input;
             if(!input) return;
             if(typeof val==="undefined") return input.html();
@@ -244,7 +244,7 @@
         }
     };
 
-    var Form=function (container,options) {
+    var Form=function(container,options) {
         var me=this;
 
         if(options||!me._options)
@@ -268,13 +268,13 @@
         me._form=form;
         me._formContainer=tbody;
 
-        $.each(options.controls,function (i,inputopt) {
+        $.each(options.controls,function(i,inputopt) {
             if(typeof i==="string"&&!inputopt.name) inputopt.name=i;
             me.add(inputopt);
         });
 
         if(options.data)
-            $.each(options.data,function (name,inputopt) {
+            $.each(options.data,function(name,inputopt) {
                 inputopt.name=name;
                 me.add(inputopt);
             });
@@ -283,26 +283,26 @@
     };
 
     Form.prototype={
-        add: function (inputopt) {
+        add: function(inputopt) {
             var me=this,
                 control=new Control(me._form,inputopt);
             me._controls[inputopt.name]=control;
             control._validation&&me._validations.add(control._validation);
             return me;
         },
-        serialize: function () {
+        serialize: function() {
             return this._form.serialize();
         },
-        editor: function (name) {
+        editor: function(name) {
             return this._controls[name].editor;
         },
-        find: function (selector) {
+        find: function(selector) {
             return this._form.find(selector);
         },
-        button: function (index) {
+        button: function(index) {
             return this.buttons[index];
         },
-        control: function () {
+        control: function() {
             var args=Array.apply([],arguments),
                 name=args.shift(),
                 control=this._controls[name];
@@ -322,27 +322,28 @@
             }
             return control;
         },
-        validate: function (callback) {
+        validate: function(callback) {
             var me=this;
 
-            if(!me._validations||!me._validations.length) {
+            if(!me._validations) {
                 callback.call(this,true);
                 return;
             }
-            $.each(me._controls,function (name,item) {
+
+            $.each(me._controls,function(name,item) {
                 if(item.type=="html"||item.type=="editor") {
                     item.val(item.editor.html());
                 }
             });
             me._validations.validate(callback);
         },
-        submit: function (url,fn) {
+        submit: function(url,fn) {
             var me=this,
                 options=me._options;
 
             var settings=url&&typeof url==="object"?$.extend({
                 url: options.url,
-                validate: function () {
+                validate: function() {
                     return true;
                 },
                 beforeSend: $.noop,
@@ -353,7 +354,7 @@
                 success: fn||!fn&&$.isFunction(url)&&url
             };
 
-            me.validate(function (validRes) {
+            me.validate(function(validRes) {
 
                 if(!validRes||(settings.validate&&!settings.validate())) {
                     settings.error&&settings.error.call(me,'表单验证失败');
@@ -362,7 +363,7 @@
                     if(me._form.has('[type="file"]').length>0) {
                         me._form.attr('action',settings.url);
 
-                        util.submitForm(me._form,function (data) {
+                        util.submitForm(me._form,function(data) {
                             settings.success&&settings.success.call(me,data)
                         });
                     } else {
@@ -371,10 +372,10 @@
                             type: 'post',
                             dataType: 'json',
                             data: me.serialize(),
-                            success: function (data) {
+                            success: function(data) {
                                 settings.success&&settings.success.call(me,data)
                             },
-                            error: function (xhr) {
+                            error: function(xhr) {
                                 settings.error&&settings.error.call(me,xhr);
                             }
                         });
@@ -383,10 +384,10 @@
 
             });
         },
-        reset: function () {
+        reset: function() {
             this._form[0].reset();
 
-            $.each(this._controls,function (name,item) {
+            $.each(this._controls,function(name,item) {
                 if(item.type=="html"||item.type=="editor") {
                     item.editor.html("");
                     item.val("");
@@ -402,7 +403,7 @@
     Form.Control=Control;
 
     $.extend($.fn,{
-        form: function (options) {
+        form: function(options) {
             return new Form(this,options)
         }
     });

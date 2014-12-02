@@ -94,15 +94,27 @@
         int page = req.Int("page", defaultValue: 1);
         int pageSize = req.Int("pageSize", defaultValue: 10);
         string keywords = req.String("keywords");
+        int categoryId = req.Int("categoryId");
 
         string where = "1=1";
         List<object> parameters = new List<object>();
 
+        if (categoryId != 0)
+        {
+            where += " and a.CategoryID=@p" + parameters.Count;
+            parameters.Add(categoryId);
+        }
+        if (!string.IsNullOrEmpty(keywords))
+        {
+            where += " and (a.Title like '%'+@p" + parameters.Count + "+'%' or a.Tags like '%'+@p" + parameters.Count + "+'%')";
+            parameters.Add(keywords);
+        }
+
         int total;
 
         var data = SQL.QueryPage("NewsID",
-            "NewsID,Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort",
-            "News",
+            "NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,Cover,Content,PublishTime,Tags,a.Sort",
+            "News a left join NewsCategory b on a.CategoryID=b.CategoryID",
             where,
             page,
             pageSize,
@@ -140,7 +152,7 @@
         parents.All(a =>
         {
             result.Add(a);
-            result.AddRange(categories.Where(b => (int)b.ParentID == (int)a.CategoryID));
+            result.AddRange(categories.Where(b => (int)b.ParentID == (int)a.value));
             return true;
         });
     }
@@ -173,7 +185,7 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
                 },
                 categoryId: {
                     label: '类别',
-                    type: 'text'
+                    type: 'select',
                     emptyAble: false,
                     options: categories
                 },
@@ -184,6 +196,11 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
                 tags: {
                     label: '标签',
                     type: 'text'
+                },
+                sort: {
+                    label: '排序',
+                    type: 'text',
+                    value: '0'
                 },
                 content: {
                     label: '正文',
@@ -239,7 +256,9 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
                 },
                 categoryId: {
                     label: '类别',
-                    type: 'text'
+                    type: 'select',
+                    emptyAble: false,
+                    options: categories
                 },
                 cover: {
                     label: '封面图片',
@@ -248,6 +267,11 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
                 tags: {
                     label: '标签',
                     type: 'text'
+                },
+                sort: {
+                    label: '排序',
+                    type: 'text',
+                    value: '0'
                 },
                 content: {
                     label: '正文',
@@ -293,9 +317,14 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
             disabled: true,
             click: function() {
                 var data=grid.selectedRow().data;
-                modifyingDialog.control("id").val(data.PrizeID);
-                modifyingDialog.control("name").val(data.PrizeName);
-                modifyingDialog.control("number").val(data.Number);
+                modifyingDialog.control("id").val(data.NewsID);
+                modifyingDialog.control("title").val(data.Title);
+                modifyingDialog.control("sort").val(data.Sort);
+                modifyingDialog.control("tags").val(data.Tags);
+                modifyingDialog.control("subtitle").val(data.SubTitle);
+                modifyingDialog.control("categoryId").val(data.CategoryID);
+                modifyingDialog.control("content").val(data.Content);
+                modifyingDialog.editor("content").html(data.Content);
                 modifyingDialog.show();
             }
         },{
@@ -324,38 +353,49 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
             }
         }]);
 
+        categories.splice(0,0,{ text: '请选择',value: '' })
 
         var grid=$('#grid').grid({
             search: {
+                data: {
+                    categoryid: {
+                        label: '类别',
+                        type: 'select',
+                        options: categories
+                    },
+                    keywords: {
+                        label: '关键字',
+                        type: 'text'
+                    }
+                },
                 beforeSend: function() {
                     buttons.items([1,2]).disable();
                 },
                 url: '?action=query'
             },
-            rowHeight: 100,
             onRowSelect: function(row,data) {
                 buttons.items([1,2]).enable();
             },
             columns: [{
                 text: '编号',
-                bind: 'PrizeID',
+                bind: 'NewsID',
                 width: 6
             },{
-                text: '奖品名称',
-                bind: 'PrizeName',
+                text: '标题',
+                bind: 'Title',
                 width: 10
             },{
-                text: '第几位用户获奖',
-                bind: 'Number',
+                text: '副标题',
+                bind: 'SubTitle',
+                width: 10
+            },{
+                text: '类别',
+                bind: 'CategoryName',
                 width: 6
             },{
-                text: "图片",
-                bind: 'Picture',
-                width: 6,
-                align: 'center',
-                render: function(cell,data) {
-                    cell.append('<a href="'+data.Picture+'" target="_blank"><img src="'+data.Picture+'" height="100%" /></a>');
-                }
+                text: '排序',
+                bind: 'Sort',
+                width: 6
             }]
         }).search();
 
