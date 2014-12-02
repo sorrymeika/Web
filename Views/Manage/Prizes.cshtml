@@ -161,7 +161,7 @@
         });
 
         //修改奖品
-        var dialogModify=new popup.Form({
+        var modifyingDialog=new popup.Form({
             url: '?action=modify',
             title: '修改奖品',
             width: 520,
@@ -196,12 +196,12 @@
             buttons: [{
                 text: '修改',
                 click: function () {
-                    dialogModify.submit({
+                    modifyingDialog.submit({
                         beforeSend: function () {
                         },
                         success: function (res) {
                             if(res.success) {
-                                dialogModify.hide().reset();
+                                modifyingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
@@ -213,7 +213,7 @@
             },{
                 text: '取消',
                 click: function () {
-                    dialogModify.hide();
+                    modifyingDialog.hide();
                 }
             }]
         });
@@ -230,10 +230,10 @@
             disabled: true,
             click: function () {
                 var data=grid.selectedRow().data;
-                dialogModify.control("id").val(data.PrizeID);
-                dialogModify.control("name").val(data.PrizeName);
-                dialogModify.control("number").val(data.Number);
-                dialogModify.show();
+                modifyingDialog.control("id").val(data.PrizeID);
+                modifyingDialog.control("name").val(data.PrizeName);
+                modifyingDialog.control("number").val(data.Number);
+                modifyingDialog.show();
             }
         },{
             text: "删除",

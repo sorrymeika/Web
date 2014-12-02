@@ -28,19 +28,19 @@
 <div id="grid"></div>
 <script type="text/javascript">
 
-    seajs.use(['jquery','lib/util','lib/buttons','lib/grid','lib/global.css'],function ($,_,Buttons) {
+    seajs.use(['jquery','lib/util','lib/buttons','lib/grid','lib/global.css'],function($,_,Buttons) {
 
         var buttons=new Buttons("#toolbar",[{
             text: "添加",
             ico: 'add',
-            click: function () {
+            click: function() {
                 location.href="/manage/media/addHtmlBlock?name="+_.queryString('name');
             }
         },{
             text: "修改",
             ico: "modify",
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().data;
                 location.href="/manage/media/modifyHtmlBlock?name="+_.queryString('name')+"&id="+data.ID;
             }
@@ -48,7 +48,7 @@
             text: "删除",
             ico: "delete",
             disabled: true,
-            click: function () {
+            click: function() {
                 if(!window.confirm('确认删除？')) return;
                 var data=grid.selectedRow().data;
 
@@ -59,7 +59,7 @@
                         id: data.ID
                     },
                     dataType: 'json',
-                    success: function (res) {
+                    success: function(res) {
                         if(res.success) {
                             alert('删除成功！');
                             grid.search();
@@ -72,13 +72,13 @@
 
         var grid=$('#grid').grid({
             search: {
-                beforeSend: function () {
+                beforeSend: function() {
                     buttons.items([1,2]).disable();
                 },
                 url: '?action=get&name='+_.queryString('name')
             },
             rowHeight: 100,
-            onRowSelect: function (row,data) {
+            onRowSelect: function(row,data) {
                 buttons.items([1,2]).enable();
             },
             columns: [{
@@ -96,4 +96,7 @@
             }]
         }).search();
     });
+
+    window.parent.resizeSettingPopup(800,500);
+
 </script>

@@ -99,9 +99,9 @@
     <Content Include="js\manage\settings.js" />
     <Content Include="js\slider.js" />
     <Content Include="js\sl\plugins\template.js" />
-    <Content Include="js\sl\sl.js" />
     <Content Include="js\sl\style.js" />
     <Content Include="js\sl\util\base64.js" />
+    <Content Include="js\sl\util\json.js" />
     <Content Include="js\sl\util\md5.js" />
     <Content Include="js\sl\widget\loading.js" />
     <Content Include="js\sl\widget\waterfall.js" />
@@ -405,7 +405,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Manage\Address.cshtml" />
-    <Content Include="Views\Manage\Email.cshtml" />
     <Content Include="Views\Manage\Prizes.cshtml" />
   </ItemGroup>
   <ItemGroup>

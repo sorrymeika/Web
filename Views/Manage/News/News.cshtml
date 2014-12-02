@@ -5,65 +5,70 @@
 
     if ("add" == Request.QueryString["action"])
     {
-        var cover = req.File("cover", false, "need cover");
-        string name = req.String("name", false, "缺少奖品名称");
-        string number = req.String("number", false, "缺少中奖几率");
+        string title = req.String("title", false, "need title");
+        string subTitle = req.String("subtitle");
+        int categoryId = req.Int("categoryId", false, "need categoryid");
+        string content = req.String("content", false, "need content");
+        var cover = req.File("cover");
+        string tags = req.String("tags");
+        int sort = req.Int("sort");
 
         if (req.HasError)
         {
-            HtmlUtil.IFrameResult(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
             return;
         }
 
-        string src = cover.Save();
+        string src = cover.IsEmpty ? null : cover.Save();
 
-        SQL.Execute("insert into Prize (PrizeName,Picture,Deleted,Number) values (@p0,@p1,0,@p2)", name, src, number);
-
+        SQL.Execute("insert into News (Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort) values (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7)", title, src, categoryId, src, content, DateTime.Now, tags, sort);
 
         HtmlUtil.Output(new { success = true });
         return;
     }
     else if ("modify" == Request.QueryString["action"])
     {
-        var picture = req.File("pic");
-        int id = req.Int("id", false, "缺少奖品ID");
-        string name = req.String("name", false, "缺少奖品名称");
-        string number = req.String("number", false, "缺少中奖几率");
-        string callback = req.String("callback");
+        int id = req.Int("id", false, "need id");
+        string title = req.String("title", false, "need title");
+        string subTitle = req.String("subtitle");
+        int categoryId = req.Int("categoryId", false, "need categoryid");
+        string content = req.String("content", false, "need content");
+        var cover = req.File("cover");
+        string tags = req.String("tags");
+        int sort = req.Int("sort");
 
         if (req.HasError)
         {
-            HtmlUtil.IFrameResult(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
             return;
         }
 
         string set = "";
-        List<object> parameters = new List<object> { id, name, number };
+        List<object> parameters = new List<object> { id, title, subTitle, categoryId, cover, content, tags, sort };
 
-        if (!picture.IsEmpty)
+        if (!cover.IsEmpty)
         {
             string origSrc = SQL.QueryValue<string>("select Picture from Prize where PrizeID=@p0", id);
 
             RequestFile.Delete(origSrc);
-            string src = picture.Save();
+            string src = cover.Save();
 
             set = ",Picture=@p3";
             parameters.Add(src);
         }
 
-        SQL.Execute("update Prize set PrizeName=@p1,Number=@p2" + set + " where PrizeID=@p0", parameters.ToArray());
+        SQL.Execute("update News set Title,SubTitle,CategoryID,Cover,Content,Tags,Sort" + set + " where NewsID=@p0", parameters.ToArray());
 
-        HtmlUtil.IFrameResult(new { success = true });
+        HtmlUtil.Output(new { success = true });
         return;
     }
     else if ("delete" == Request.QueryString["action"])
     {
-        int id = req.Int("id", false, "缺少奖品ID");
-        string callback = req.String("callback");
+        int id = req.Int("id", false, "need id");
 
         if (req.HasError)
         {
-            HtmlUtil.IFrameResult(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
             return;
         }
 
@@ -71,43 +76,157 @@
 
         RequestFile.Delete(origSrc);
 
-        SQL.Execute("update Prize set Deleted=1 where PrizeID=@p0", id);
+        SQL.Execute("delete from News where NewsID=@p0", id);
 
-        HtmlUtil.IFrameResult(new { success = true });
+        HtmlUtil.Output(new { success = true });
         return;
     }
     else if ("get" == Request.QueryString["action"])
     {
-        var data = SQL.Query("select PrizeID,PrizeName,Picture,Number from Prize where Deleted=0");
+        int id = req.Int("id");
+        var data = SQL.QuerySingle("select NewsID,Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort where NewsID=@p0", id);
+
+        HtmlUtil.Output(new { success = true, data = data });
+        return;
+    }
+    else if ("query" == Request.QueryString["action"])
+    {
+        int page = req.Int("page", defaultValue: 1);
+        int pageSize = req.Int("pageSize", defaultValue: 10);
+        string keywords = req.String("keywords");
+
+        string where = "1=1";
+        List<object> parameters = new List<object>();
+
+        int total;
+
+        var data = SQL.QueryPage("NewsID",
+            "NewsID,Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort",
+            "News",
+            where,
+            page,
+            pageSize,
+            parameters,
+            out total,
+            new Dictionary<String, bool>
+            {
+                { "Sort", false },
+                { "PublishTime", false },
+            });
 
         if (data != null)
         {
             data.All(a =>
             {
-                a["Picture"] = RequestFile.FullUrl(a["Picture"]);
+                a.Cover = RequestFile.FullUrl(a.Cover);
                 return true;
             });
         }
 
-        HtmlUtil.IFrameResult(new { success = true, data = data });
+        HtmlUtil.Output(new { success = true, data = data, total = total });
         return;
     }
 
     ViewBag.Title = "新闻管理";
     Layout = "~/Views/Shared/_ManageLayout.cshtml";
+
+    var categories = SQL.Query("select CategoryID as value,CategoryName as text,ParentID from NewsCategory order by Sort desc,CategoryID asc");
+
+    List<dynamic> parents = categories == null ? null : categories.Where(a => a.ParentID == 0).ToList();
+    List<dynamic> result = new List<dynamic>();
+
+    if (null != parents)
+    {
+        parents.All(a =>
+        {
+            result.Add(a);
+            result.AddRange(categories.Where(b => (int)b.ParentID == (int)a.CategoryID));
+            return true;
+        });
+    }
 }
 <h1>新闻管理</h1>
 <div id="toolbar" class="toolbar"></div>
 <div id="grid"></div>
 <script>
-    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+var categories=@(new MvcHtmlString(Json.Encode(result)));
+</script>
+<script>
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function($,Buttons,popup) {
 
         //添加
         var addingDialog=new popup.Form({
             url: '?action=add',
             title: '添加新闻',
-            width: 650,
+            width: 820,
+            height: 500,
             controls: {
+                title: {
+                    label: '新闻标题',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写新闻标题'
+                },
+                subtitle: {
+                    label: '子标题',
+                    type: 'text'
+                },
+                categoryId: {
+                    label: '类别',
+                    type: 'text'
+                    emptyAble: false,
+                    options: categories
+                },
+                cover: {
+                    label: '封面图片',
+                    type: 'file'
+                },
+                tags: {
+                    label: '标签',
+                    type: 'text'
+                },
+                content: {
+                    label: '正文',
+                    type: 'html',
+                    emptyAble: false,
+                    emptyText: '请填写正文'
+                }
+            },
+            buttons: [{
+                text: '添加',
+                click: function() {
+                    addingDialog.submit({
+                        beforeSend: function() {
+                        },
+                        success: function(res) {
+                            if(res.success) {
+                                addingDialog.hide().reset();
+                                grid.search();
+                            } else
+                                alert(res.msg);
+                        },
+                        error: function() {
+                        }
+                    });
+                }
+            },{
+                text: '取消',
+                click: function() {
+                    addingDialog.hide();
+                }
+            }]
+        });
+
+        //修改
+        var modifyingDialog=new popup.Form({
+            url: '?action=modify',
+            title: '修改新闻',
+            width: 820,
+            height: 500,
+            controls: {
+                id: {
+                    type: 'hidden'
+                },
                 title: {
                     label: '新闻标题',
                     type: 'text',
@@ -138,110 +257,52 @@
                 }
             },
             buttons: [{
-                text: '添加',
-                click: function () {
-                    addingDialog.submit({
-                        beforeSend: function () {
-                        },
-                        success: function (res) {
-                            if(res.success) {
-                                addingDialog.hide().reset();
-                                grid.search();
-                            } else
-                                alert(res.msg);
-                        },
-                        error: function () {
-                        }
-                    });
-                }
-            },{
-                text: '取消',
-                click: function () {
-                    addingDialog.hide();
-                }
-            }]
-        });
-
-        //修改奖品
-        var dialogModify=new popup.Form({
-            url: '?action=modify',
-            title: '修改奖品',
-            width: 520,
-            controls: {
-                id: {
-                    type: 'hidden'
-                },
-                name: {
-                    label: '奖品名称',
-                    type: 'text',
-                    validation: {
-                        emptyAble: false,
-                        emptyText: '请填写奖品名称'
-                    }
-                },
-                number: {
-                    label: '第几位用户获奖',
-                    type: 'text',
-                    validation: {
-                        msg: "设置第几位用户获得该奖，如：“2,100”。第2和第100个用户将获得该奖品",
-                        emptyAble: false,
-                        emptyText: '请填写奖品名称',
-                        regex: /^\d+(,\d+)*$/,
-                        regexText: '格式错误'
-                    }
-                },
-                pic: {
-                    label: '奖品图片',
-                    type: 'file'
-                }
-            },
-            buttons: [{
                 text: '修改',
-                click: function () {
-                    dialogModify.submit({
-                        beforeSend: function () {
+                click: function() {
+                    modifyingDialog.submit({
+                        beforeSend: function() {
                         },
-                        success: function (res) {
+                        success: function(res) {
                             if(res.success) {
-                                dialogModify.hide().reset();
+                                modifyingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
                         },
-                        error: function () {
+                        error: function() {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function () {
-                    dialogModify.hide();
+                click: function() {
+                    modifyingDialog.hide();
                 }
             }]
         });
 
         var buttons=new Buttons("#toolbar",[{
-            text: "添加奖品",
+            text: "添加新闻",
             ico: 'add',
-            click: function () {
+            click: function() {
                 addingDialog.show();
             }
         },{
             text: "修改",
             ico: "modify",
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().data;
-                dialogModify.control("id").val(data.PrizeID);
-                dialogModify.control("name").val(data.PrizeName);
-                dialogModify.control("number").val(data.Number);
-                dialogModify.show();
+                modifyingDialog.control("id").val(data.PrizeID);
+                modifyingDialog.control("name").val(data.PrizeName);
+                modifyingDialog.control("number").val(data.Number);
+                modifyingDialog.show();
             }
         },{
             text: "删除",
             ico: "delete",
             disabled: true,
-            click: function () {
+            click: function() {
                 if(!window.confirm('确认删除？')) return;
                 var data=grid.selectedRow().data;
 
@@ -252,7 +313,7 @@
                         id: data.PrizeID
                     },
                     dataType: 'json',
-                    success: function (res) {
+                    success: function(res) {
                         if(res.success) {
                             alert('删除成功！');
                             grid.search();
@@ -266,13 +327,13 @@
 
         var grid=$('#grid').grid({
             search: {
-                beforeSend: function () {
+                beforeSend: function() {
                     buttons.items([1,2]).disable();
                 },
-                url: '?action=get'
+                url: '?action=query'
             },
             rowHeight: 100,
-            onRowSelect: function (row,data) {
+            onRowSelect: function(row,data) {
                 buttons.items([1,2]).enable();
             },
             columns: [{
@@ -292,7 +353,7 @@
                 bind: 'Picture',
                 width: 6,
                 align: 'center',
-                render: function (cell,data) {
+                render: function(cell,data) {
                     cell.append('<a href="'+data.Picture+'" target="_blank"><img src="'+data.Picture+'" height="100%" /></a>');
                 }
             }]

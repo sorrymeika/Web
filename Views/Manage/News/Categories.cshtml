@@ -88,7 +88,7 @@
 <div id="toolbar" class="toolbar"></div>
 <div id="grid"></div>
 <script>
-    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function($,Buttons,popup) {
 
         //添加
         var addingDialog=new popup.Form({
@@ -113,24 +113,24 @@
             },
             buttons: [{
                 text: '添加',
-                click: function () {
+                click: function() {
                     addingDialog.submit({
-                        beforeSend: function () {
+                        beforeSend: function() {
                         },
-                        success: function (res) {
+                        success: function(res) {
                             if(res.success) {
                                 addingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
                         },
-                        error: function () {
+                        error: function() {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function () {
+                click: function() {
                     addingDialog.hide();
                 }
             }]
@@ -158,24 +158,24 @@
             },
             buttons: [{
                 text: '修改',
-                click: function () {
+                click: function() {
                     modifyingDialog.submit({
-                        beforeSend: function () {
+                        beforeSend: function() {
                         },
-                        success: function (res) {
+                        success: function(res) {
                             if(res.success) {
                                 modifyingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
                         },
-                        error: function () {
+                        error: function() {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function () {
+                click: function() {
                     modifyingDialog.hide();
                 }
             }]
@@ -184,7 +184,7 @@
         var buttons=new Buttons("#toolbar",[{
             text: "添加父类",
             ico: 'add',
-            click: function () {
+            click: function() {
 
                 addingDialog.control("parentid").val(0);
                 addingDialog.show();
@@ -193,7 +193,7 @@
             text: "添加子类",
             ico: 'add',
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().data;
                 addingDialog.control("parentid").val(data.CategoryID);
                 addingDialog.show();
@@ -202,7 +202,7 @@
             text: "修改",
             ico: "modify",
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().data;
                 modifyingDialog.control("id").val(data.CategoryID);
                 modifyingDialog.control("categoryName").val(data.CategoryName);
@@ -213,7 +213,7 @@
             text: "删除",
             ico: "delete",
             disabled: true,
-            click: function () {
+            click: function() {
                 if(!window.confirm('确认删除该分类和该分类下的所有新闻？')) return;
                 var data=grid.selectedRow().data;
 
@@ -224,7 +224,7 @@
                         id: data.CategoryID
                     },
                     dataType: 'json',
-                    success: function (res) {
+                    success: function(res) {
                         if(res.success) {
                             alert('删除成功！');
                             grid.search();
@@ -239,12 +239,12 @@
         var grid=$('#grid').grid({
             type: 'tree',
             search: {
-                beforeSend: function () {
+                beforeSend: function() {
                     buttons.items([1,2,3]).disable();
                 },
                 url: '?action=get'
             },
-            onRowSelect: function (row,data) {
+            onRowSelect: function(row,data) {
                 buttons.items([1,2,3]).disable();
 
                 var enabled=[2];
@@ -265,7 +265,7 @@
                 text: '是否可删',
                 bind: 'Deletable',
                 width: 5,
-                render: function (cell,data) {
+                render: function(cell,data) {
                     cell.append(data.Deletable?"&nbsp;是":"&nbsp;否");
                 }
             }]

@@ -26,5 +26,5 @@ Tags varchar(200),
 Sort int
 )
 
-insert into NewsCategory (CategoryName) values ('关于我们'),('小小辅导员'),('最新资讯'),('帮助中心')
+insert into NewsCategory (CategoryName,Deletable) values ('关于我们',0),('小小辅导员',0),('最新资讯',0),('帮助中心',0)
 

@@ -99,7 +99,7 @@
     seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
 
         //修改服装
-        var dialogModify=new popup.Form({
+        var modifyingDialog=new popup.Form({
             url: '?action=modify',
             title: '查看用户信息',
             width: 520,
@@ -144,7 +144,7 @@
             buttons: [{
                 text: '确定',
                 click: function () {
-                    dialogModify.hide();
+                    modifyingDialog.hide();
                 }
             }]
         });
@@ -157,11 +157,11 @@
                 var data=grid.selectedRow().data;
                 $.each(data,function (k,v) {
                     if(k=='Picture') {
-                        dialogModify.control(k).html('<img src="'+v+'" style="height:100px"/>');
+                        modifyingDialog.control(k).html('<img src="'+v+'" style="height:100px"/>');
                     } else
-                        dialogModify.control(k).html(v);
+                        modifyingDialog.control(k).html(v);
                 });
-                dialogModify.show();
+                modifyingDialog.show();
             }
         },{
             text: "导出搜索结果",

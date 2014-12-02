@@ -1,18 +1,7 @@
-﻿define(function (require,exports,module) {
+﻿define(function(require,exports,module) {
     var $=require('jquery');
 
-    var offsetParent=function (el) {
-        var parent=el.parent(),
-			position;
-        while(parent.length!=0&&parent[0].tagName.toLowerCase()!="body") {
-            if($.inArray(parent.css('position'),['fixed','absolute','relative']))
-                return parent;
-            parent=parent.parent();
-        }
-        return parent;
-    };
-
-    var Validation=function (input,options) {
+    var Validation=function(input,options) {
         var me=this;
 
         options=$.extend({
@@ -61,8 +50,8 @@
         options._harbor=harbor;
 
         var position=options.position.split(':'),
-			where=position[0],
-			compare=options.compare;
+            where=position[0],
+            compare=options.compare;
 
         options._isDock=/^dock/.test(where);
         options._dock=(new Function('return '+(position[1]||'this'))).call(input);
@@ -71,7 +60,7 @@
         options.onValidate&&input.on('validate',$.proxy(options.onValidate,me));
 
         if(compare)
-            compare.on('validate',function (evt,suc) {
+            compare.on('validate',function(evt,suc) {
                 if(suc&&input.val()&&this.value!=input.val()) {
                     me.error(options.compareText);
                 }
@@ -79,32 +68,32 @@
 
         if(input[0].tagName.toLowerCase()=="input"&&input[0].type=="file") {
         } else {
-            input.focus(function () {
+            input.focus(function() {
                 if(options.beforeValidate) options.beforeValidate.call(me);
                 me.hide();
                 if(options.msg) me.msg(options.msg);
             })
-			.blur(function () {
+			.blur(function() {
 			    me.hide().validate();
 			});
         }
     };
     Validation.prototype={
-        hide: function () {
+        hide: function() {
             this._options._tip.hide();
             return this;
         },
-        validate: function (callback) {
+        validate: function(callback) {
             var me=this,
 				opt=me._options,
 				v=opt._input.val(),
 				res=false,
                 dfd={
-                    reject: function (msg) {
+                    reject: function(msg) {
                         me.error(opt.validationText||msg);
                         callback&&callback(false);
                     },
-                    resolve: function () {
+                    resolve: function() {
                         me.success(opt.successText);
                         callback&&callback(true);
                     }
@@ -132,16 +121,16 @@
                 return res;
             }
         },
-        msg: function (msg) {
+        msg: function(msg) {
             return this._text(msg);
         },
-        success: function (msg) {
+        success: function(msg) {
             return this._text(msg,true);
         },
-        error: function (msg) {
+        error: function(msg) {
             return this._text(msg,false);
         },
-        _text: function (msg,type) {
+        _text: function(msg,type) {
             var me=this,
                 opt=me._options,
                 tip=opt._tip,
@@ -149,14 +138,17 @@
                 input=opt._input,
                 where=opt._where,
                 left=opt.left,
-                topFix=opt.top;
+                topFix=opt.top,
+                dock=opt._isDock?opt._dock:opt._dock.parent();
 
-            harbor.appendTo(opt._isDock?opt._dock:offsetParent(opt._dock));
+            $.inArray(dock.css('position'),['relative','absolute','fix'])== -1&&dock.css('position','relative');
+
+            harbor.appendTo(dock);
 
             var pos=input.position();
 
             if('bottom'==where) {
-                displayControlParent.css({
+                harbor.css({
                     left: pos.left+left,
                     top: pos.top+input.outerHeight()+topFix
                 });
@@ -198,43 +190,43 @@
         }
     };
 
-    var Validations=function (options) {
+    var Validations=function(options) {
         var me=this;
 
         me._list=[];
 
         if(options)
-            $.each(options,function (input,opt) {
+            $.each(options,function(input,opt) {
                 me.add(input,opt);
             });
     };
 
     Validations.prototype={
-        add: function (input,options) {
+        add: function(input,options) {
             var valid=options?new Validation(input,options):input;
 
             this._list.push(valid);
 
             return this;
         },
-        items: function () {
+        items: function() {
             var list=this._list,
                 args=arguments,
                 items=new Validations();
 
-            $.each($.isArray(args[0])?args[0]:args,function (i,index) {
+            $.each($.isArray(args[0])?args[0]:args,function(i,index) {
                 items._list.push(list[index]);
             });
 
             return items;
         },
-        hide: function () {
-            $.each(this._list,function (i,item) {
+        hide: function() {
+            $.each(this._list,function(i,item) {
                 item.hide();
             });
             return this;
         },
-        validate: function (callback) {
+        validate: function(callback) {
             var list=this._list,
                 length=list.length-1,
                 result=true,
@@ -242,8 +234,8 @@
                 isDfd=false,
                 dfd=$.Deferred();
 
-            $.each(list,function (i,item) {
-                immediately=item.validate(function (flag) {
+            $.each(list,function(i,item) {
+                immediately=item.validate(function(flag) {
                     result&=flag;
 
                     if(length==i) {
@@ -259,7 +251,7 @@
 
             return isDfd?dfd:result;
         },
-        item: function (i) {
+        item: function(i) {
             return this._list[i];
         }
     };
