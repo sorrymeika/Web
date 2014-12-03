@@ -149,7 +149,7 @@ h1 { border-bottom: 1px solid #ddd; font-size: 18pt; margin-bottom: 20px; paddin
 .dialog { border: 1px solid #ddd; background: #fff; position: absolute; }
 .dialog_hd { font-weight: bold; border-bottom: 1px solid #ddd; background: #f1f1f1; padding: 0 10px; height: 25px; line-height: 25px; cursor: move; -moz-user-select: none; -webkit-user-select: none; }
 .dialog_close { float: right; cursor: pointer; margin: 0 0 0 10px; color: #666; font-family: Arial, Verdana; }
-.dialog_content { padding: 10px; }
+.dialog_content { padding: 10px; overflow-x: visible; }
 .dialog_fixed { position: fixed; _position: absolute; _left: expression(document.documentElement.scrollLeft+(document.documentElement.clientWidth-this.offsetWidth)/2); _top: expression(document.documentElement.scrollTop+(document.documentElement.clientHeight-this.offsetHeight)/2); zoom: 1; }
 .dialog .action { text-align: right; margin-right: 20px; margin-bottom: 20px; }
 .dialog .form { margin-top: 10px; margin-bottom: 15px; }

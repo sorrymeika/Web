@@ -1,0 +1,340 @@
+﻿@using SL.Data
+@using SL.Util
+@{
+    RequestUtil req = new RequestUtil();
+
+    if ("add" == Request.QueryString["action"])
+    {
+        int lessonId = req.Int("lessonId", false, "need lessonId");
+        int teacherId = req.Int("teacherId", false, "need lessonId");
+        string dateStr = req.String("date", false, "need date");
+        string time = req.String("timeHid", false, "need time");
+        DateTime date = req.DateTime("date");
+        string dateDisplay = req.String("dateDisplayHid", false, "need dateDisplayHid");
+
+        if (req.HasError)
+        {
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            return;
+        }
+
+        if (SQL.Exists("select 1 from Schedule where LessonID=@p0 and TeacherID=@p1 and DateStr=@p2 and Time=@p3", lessonId, teacherId, dateStr, time))
+        {
+            HtmlUtil.Output(new { success = false, msg = "已有相同的老师和课程安排" });
+            return;
+        }
+
+        SQL.Execute("insert into Schedule (LessonID,TeacherID,DateStr,Date,DateDisplay,Time) values (@p0,@p1,@p2,@p3,@p4,@p5)", lessonId, teacherId, dateStr, date, dateDisplay, time);
+
+        HtmlUtil.Output(new { success = true });
+        return;
+    }
+    else if ("modify" == Request.QueryString["action"])
+    {
+        HtmlUtil.Output(new { success = true });
+        return;
+    }
+    else if ("delete" == Request.QueryString["action"])
+    {
+        int id = req.Int("id", false, "need id");
+
+        if (req.HasError)
+        {
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            return;
+        }
+
+        SQL.Execute("delete from Schedule where ScheduleID=@p0", id);
+
+        HtmlUtil.Output(new { success = true });
+        return;
+    }
+    else if ("query" == Request.QueryString["action"])
+    {
+        var data = SQL.Query("select ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID where DateStr=@p0", req.String("date"));
+
+        HtmlUtil.Output(new { success = true, data = data });
+        return;
+    }
+
+    ViewBag.Title = "课程管理";
+    Layout = "~/Views/Shared/_ManageLayout.cshtml";
+
+    var weeks = new String[] { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
+    List<string> dates = new List<string>();
+    var thisWeek = (int)DateTime.Today.DayOfWeek;
+    for (var i = 0; i < 7; i++)
+    {
+        var day = DateTime.Today.AddDays(i - thisWeek + 1);
+        weeks[i] = day.ToString("MM-dd") + weeks[i] + "|" + day.ToString("yyyy-MM-dd");
+        dates.Add("'" + day.ToString("yyyy-MM-dd") + "'");
+    }
+
+    var schedules = SQL.Query("select ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID where DateStr in (" + String.Join(",", dates) + ")");
+
+    var lessions = SQL.Query("select LessonID as value,LessonName as text from Lesson order by Sort desc");
+    var teachers = SQL.Query("select TeacherID as value,TeacherName as text from Teacher order by Sort desc");
+}
+<style>
+    .gridCellTextBox { text-align: center; }
+    li.gridCell.selected { background: #DFE8F6; }
+</style>
+<h1>课程表管理</h1>
+<div class="toolbar"></div>
+<div id="toolbar" class="toolbar"></div>
+<div id="grid"></div>
+<div id="grid1"></div>
+<script>
+    var schedules=@(new MvcHtmlString(Json.Encode(schedules)));
+    var thisWeek=@(new MvcHtmlString(Json.Encode(weeks)));
+    var lessions=@(new MvcHtmlString(Json.Encode(lessions)));
+    var teachers=@(new MvcHtmlString(Json.Encode(teachers)));
+</script>
+<script>
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+
+        //添加
+        var addingDialog=new popup.Form({
+            url: '?action=add',
+            title: '添加课程',
+            width: 600,
+            height: 300,
+            controls: {
+                date: {
+                    type: 'hidden'
+                },
+                dateDisplay: {
+                    label: '上课日期',
+                    type: 'label'
+                },
+                dateDisplayHid: {
+                    type: 'hidden'
+                },
+                timeHid: {
+                    type: 'hidden'
+                },
+                time: {
+                    label: '上课时间',
+                    type: 'label'
+                },
+                lessonId: {
+                    label: '选择课程',
+                    type: 'select',
+                    emptyAble: false,
+                    emptyText: '请选择课程',
+                    options: lessions
+                },
+                teacherId: {
+                    label: '选择老师',
+                    type: 'select',
+                    emptyAble: false,
+                    emptyText: '请选择老师',
+                    options: teachers
+                }
+            },
+            buttons: [{
+                text: '添加',
+                click: function () {
+                    addingDialog.submit({
+                        beforeSend: function () {
+                        },
+                        success: function (res) {
+                            if(res.success) {
+                                location.reload();
+                            } else
+                                alert(res.msg);
+                        },
+                        error: function () {
+                        }
+                    });
+                }
+            },{
+                text: '取消',
+                click: function () {
+                    addingDialog.hide();
+                }
+            }]
+        });
+
+        //修改
+        var modifyingDialog=new popup.Form({
+            url: '?action=modify',
+            title: '修改课程',
+            width: 600,
+            height: 300,
+            controls: {
+                date: {
+                    type: 'hidden'
+                },
+                dateDisplay: {
+                    label: '上课日期',
+                    type: 'label'
+                },
+                time: {
+                    label: '上课时间',
+                    type: 'label'
+                },
+                grid: {
+                    type: 'grid',
+                    options: {
+                        search: {
+                            url: '?action=query',
+                            data: {
+                                date: {
+                                    type: 'hidden'
+                                }
+                            }
+                        },
+                        columns: [{
+                            text: '课程',
+                            bind: 'LessonName',
+                            width: 10
+                        },{
+                            text: '老师',
+                            bind: 'TeacherName',
+                            width: 10
+                        },{
+                            text: '操作',
+                            width: 5,
+                            render: function (cell,data) {
+                                cell.append($('<a href="javascript:;" style="color:#c00">[删除]</a>').click(function () {
+                                    if(window.confirm('确认删除？')) {
+                                        $.ajax({
+                                            url: '?action=delete',
+                                            type: 'post',
+                                            data: {
+                                                id: data.ScheduleID
+                                            },
+                                            dataType: 'json',
+                                            success: function (res) {
+                                                if(res.success) {
+                                                    alert('删除成功！');
+                                                    location.reload();
+                                                } else
+                                                    alert(res.msg);
+                                            }
+                                        });
+                                    }
+                                }));
+                            }
+                        }]
+                    }
+                }
+            },
+            buttons: [{
+                text: '关闭',
+                click: function () {
+                    modifyingDialog.hide();
+                }
+            }]
+        });
+
+        var buttons=new Buttons("#toolbar",[{
+            text: "添加课程",
+            ico: 'add',
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().cells[currentIndex].data;
+
+                addingDialog.control("date").val(data.date);
+                addingDialog.control("dateDisplayHid").val(data.dateDisplay);
+                addingDialog.control("timeHid").val(data.time);
+
+                addingDialog.control("dateDisplay").html(data.dateDisplay);
+                addingDialog.control("time").html(data.time);
+                addingDialog.show();
+            }
+        },{
+            text: "课程修改",
+            ico: "modify",
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().cells[currentIndex].data;
+                var sgrid=modifyingDialog.control('grid')._input;
+                sgrid.searchInput('date').val(data.date);
+                sgrid.search();
+
+                modifyingDialog.control("date").val(data.date);
+                modifyingDialog.control("dateDisplay").html(data.dateDisplay);
+                modifyingDialog.control("time").html(data.time);
+
+                modifyingDialog.show();
+            }
+        }]);
+
+        var columns=[{
+            text: '时间段',
+            bind: "time",
+            align: 'center',
+            valign: 'center',
+            width: 10
+        }];
+
+        var data=[{
+            time: "8:00--9:30"
+        },{
+            time: "10:00--11:30"
+        },{
+            time: "13:00--14:30"
+        },{
+            time: "15:00--16:30"
+        },{
+            time: "17:00--18:30"
+        }];
+
+        $.each(thisWeek,function (i,item) {
+            item=item.split('|');
+            columns.push({
+                text: item[0],
+                align: 'center',
+                valign: 'center',
+                width: 10,
+                bind: item[1],
+                render: function (cell,data) {
+                    cell.append(cell.data.data);
+                }
+            });
+
+            $.each(data,function (j,dataItem) {
+
+                var str='';
+                if(schedules) {
+                    $.each(schedules,function (ii,schedule) {
+                        if(item[1]==schedule.DateStr&&dataItem.time==schedule.Time)
+                            str+=schedule.LessonName+schedule.TeacherName+"<br>"
+                    });
+                }
+
+                dataItem[item[1]]={
+                    time: dataItem.time,
+                    date: item[1],
+                    dateDisplay: item[0],
+                    data: str
+                };
+            });
+        });
+
+        console.log(schedules)
+
+        var grid=$('#grid').grid({
+            rowHeight: 80,
+            columns: columns
+        });
+
+        var currentIndex;
+
+        $('#grid').on('click','li.gridCell:not(:first-child)',function (e) {
+            var target=$(e.currentTarget);
+
+            $('#grid').find('.gridCell').removeClass('selected');
+            target.addClass('selected');
+
+            currentIndex=target.index();
+
+            buttons.items([0,1]).enable();
+        });
+
+        grid.loadData(data);
+
+    });
+</script>

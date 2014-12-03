@@ -28,6 +28,13 @@ namespace SL.Web
                 new { handle = "^Item$", id = "^\\d+$" }
             );
 
+            routes.MapRoute(
+                "News",
+                "{handle}/{id}.html",
+                new { controller = "Core", action = "Index", catalog = "News" },
+                new { handle = "^News|NewsList|NewsSubList$", id = "^\\d+$" }
+            );
+
             #region 默认
 
             routes.MapRoute(

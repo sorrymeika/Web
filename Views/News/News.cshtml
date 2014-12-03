@@ -1,0 +1,12 @@
+﻿@{
+    ViewBag.Title = "新闻";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="headerwrap">
+    <div class="index_slider">
+        <ul class="slide clearfix js_slide">
+            <li style="background-image: url(@Url.Content("~/Theme/Images/1.jpg"))"></li>
+        </ul>
+    </div>
+    @Html.Partial("_Header", "about")
+</div>

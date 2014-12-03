@@ -1,0 +1,122 @@
+﻿@{
+    if (Request["action"] == "search")
+    {
+        var req = new SL.Util.RequestUtil();
+
+        int page = req.Int("page", defaultValue: 1);
+        int pageSize = req.Int("pageSize", defaultValue: 10);
+
+        DateTime regDtFrom = req.DateTime("regDtFrom");
+        DateTime regDtTo = req.DateTime("regDtTo");
+        string keywords = req.String("keywords");
+        string sort = req.String("sort");
+        bool isAsc = req.Bool("asc");
+
+        if (req.HasError)
+        {
+            Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+            return;
+        }
+
+        string where = "1=1";
+        List<object> parameters = new List<object>();
+        Dictionary<string, bool> sortDict = new Dictionary<string, bool>();
+
+        if (regDtFrom != DateTime.MinValue && regDtTo != DateTime.MinValue)
+        {
+            where += " and RegisterDate between @p0 and @p1";
+            parameters.Add(regDtFrom.Date);
+            parameters.Add(regDtTo.Date.AddDays(1).AddSeconds(-1));
+        }
+
+        if (!string.IsNullOrEmpty(keywords))
+        {
+            where += " and (UserName like '%'+@p" + parameters.Count + "+'%' or Account like '%'+@p" + parameters.Count + "+'%')";
+            parameters.Add(keywords);
+        }
+
+        if (!string.IsNullOrEmpty(sort))
+        {
+            sortDict.Add(sort, isAsc);
+        }
+        else
+        {
+            sortDict.Add("RegisterDate", false);
+        }
+
+        int total;
+        var data = SL.Data.SQL.QueryPage(new[] { "UserID" },
+            "UserID,Mobile,Email,UserName,RegisterDate,LatestLoginDate,Birthday",
+            "Users",
+            where,
+            page,
+            pageSize,
+            parameters.ToArray(),
+            out total,
+            sortDict);
+
+        Json.Write(new { success = true, total = total, data = data }, Output);
+        return;
+    }
+
+    ViewBag.Title = "用户管理";
+    Layout = "~/Views/Shared/_ManageLayout.cshtml";
+}
+<h1>用户管理</h1>
+<div id="toolbar" class="toolbar"></div>
+<div id="grid"></div>
+<script>
+    seajs.use(["jquery",'lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+
+        var grid=$('#grid').grid({
+            search: {
+                url: '?action=search',
+                beforeSend: function () {
+                },
+                data: {
+                    regDtFrom: {
+                        label: '注册日期 从',
+                        type: 'calendar'
+                    },
+                    regDtTo: {
+                        label: '到',
+                        type: 'calendar'
+                    },
+                    keywords: {
+                        newLine: true,
+                        label: '关键字',
+                        type: 'text'
+                    }
+                }
+            },
+            pageEnabled: true,
+            onRowSelect: function (row,data) {
+            },
+            columns: [{
+                text: "编号",
+                width: 5,
+                bind: 'UserID'
+            },{
+                text: "邮箱",
+                width: 15,
+                bind: 'Email'
+            },{
+                text: "姓名",
+                width: 6,
+                bind: 'UserName'
+            },{
+                text: "手机",
+                width: 6,
+                bind: 'Mobile'
+            },{
+                text: "生日",
+                width: 6,
+                bind: 'Birthday'
+            },{
+                text: "注册日期",
+                width: 6,
+                bind: 'RegisterDate'
+            }]
+        }).search();
+    });
+</script>

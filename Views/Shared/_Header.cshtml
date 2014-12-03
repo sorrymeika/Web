@@ -18,14 +18,14 @@
         </ul>
     </div>
     <div class="nav">
-        <ul class="clearfix" data-setting="links" data-name="nav">
-            <li class="curr"><a href="/">首页</a></li>
-            <li><a href="/">关于我们</a></li>
+        <ul class="clearfix" data-name="nav">
+            <li class="@(Model == "home" ? "curr" : "")"><a href="/">首页</a></li>
+            <li class="@(Model == "about" ? "curr" : "")"><a href="/NewsList/1.html">关于我们</a></li>
             <li><a href="/creation.html">课程展示</a></li>
             <li><a href="/eco.html">名师介绍</a></li>
-            <li><a href="/gallery.html">GK Youth</a></li>
-            <li class="last"><a href="/download.html">最新资讯</a></li>
-            <li class="last"><a href="/download.html">帮助中心</a></li>
+            <li><a href="/NewsList/2.html">GK Youth</a></li>
+            <li><a href="/NewsList/3.html">最新资讯</a></li>
+            <li class="last"><a href="/NewsList/4.html">帮助中心</a></li>
         </ul>
     </div>
 </div>
