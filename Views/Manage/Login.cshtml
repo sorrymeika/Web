@@ -3,9 +3,9 @@
     if (Request.QueryString["action"] == "login")
     {
         RequestUtil req = new RequestUtil();
-        var checkCode = SessionUtil.Get<string>("CheckCode");
         string adminName = req.String("mobile", false, "请填写用户名");
         string password = req.Password("password", "请填写密码");
+        var checkCode = SessionUtil.Get<string>("CheckCode");
         string validcode = req.String("validcode", false, "请填写验证码", compare: checkCode, compareText: "验证码不正确");
 
         SessionUtil.Remove("CheckCode");

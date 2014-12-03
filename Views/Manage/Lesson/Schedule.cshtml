@@ -2,6 +2,7 @@
 @using SL.Util
 @{
     RequestUtil req = new RequestUtil();
+    int type = req.Int("type");
 
     if ("add" == Request.QueryString["action"])
     {
@@ -63,6 +64,12 @@
     var weeks = new String[] { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
     List<string> dates = new List<string>();
     var thisWeek = (int)DateTime.Today.DayOfWeek;
+
+    if (type == 1)
+    {
+        thisWeek -= 7;
+    }
+
     for (var i = 0; i < 7; i++)
     {
         var day = DateTime.Today.AddDays(i - thisWeek + 1);
@@ -80,8 +87,7 @@
     li.gridCell.selected { background: #DFE8F6; }
 </style>
 <h1>课程表管理</h1>
-<div class="toolbar"></div>
-<div id="toolbar" class="toolbar"></div>
+<div id="toolbar" class="toolbar"><a style="color:#c00;font-size: 14px;" href="?type=@(type == 0 ? 1 : 0)">[@(type == 0 ? "下周" : "本周")]</a>&nbsp;&nbsp;</div>
 <div id="grid"></div>
 <div id="grid1"></div>
 <script>
@@ -91,7 +97,7 @@
     var teachers=@(new MvcHtmlString(Json.Encode(teachers)));
 </script>
 <script>
-    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function($,Buttons,popup) {
 
         //添加
         var addingDialog=new popup.Form({
@@ -134,23 +140,23 @@
             },
             buttons: [{
                 text: '添加',
-                click: function () {
+                click: function() {
                     addingDialog.submit({
-                        beforeSend: function () {
+                        beforeSend: function() {
                         },
-                        success: function (res) {
+                        success: function(res) {
                             if(res.success) {
                                 location.reload();
                             } else
                                 alert(res.msg);
                         },
-                        error: function () {
+                        error: function() {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function () {
+                click: function() {
                     addingDialog.hide();
                 }
             }]
@@ -196,8 +202,8 @@
                         },{
                             text: '操作',
                             width: 5,
-                            render: function (cell,data) {
-                                cell.append($('<a href="javascript:;" style="color:#c00">[删除]</a>').click(function () {
+                            render: function(cell,data) {
+                                cell.append($('<a href="javascript:;" style="color:#c00">[删除]</a>').click(function() {
                                     if(window.confirm('确认删除？')) {
                                         $.ajax({
                                             url: '?action=delete',
@@ -206,7 +212,7 @@
                                                 id: data.ScheduleID
                                             },
                                             dataType: 'json',
-                                            success: function (res) {
+                                            success: function(res) {
                                                 if(res.success) {
                                                     alert('删除成功！');
                                                     location.reload();
@@ -223,7 +229,7 @@
             },
             buttons: [{
                 text: '关闭',
-                click: function () {
+                click: function() {
                     modifyingDialog.hide();
                 }
             }]
@@ -233,7 +239,7 @@
             text: "添加课程",
             ico: 'add',
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().cells[currentIndex].data;
 
                 addingDialog.control("date").val(data.date);
@@ -248,7 +254,7 @@
             text: "课程修改",
             ico: "modify",
             disabled: true,
-            click: function () {
+            click: function() {
                 var data=grid.selectedRow().cells[currentIndex].data;
                 var sgrid=modifyingDialog.control('grid')._input;
                 sgrid.searchInput('date').val(data.date);
@@ -282,7 +288,7 @@
             time: "17:00--18:30"
         }];
 
-        $.each(thisWeek,function (i,item) {
+        $.each(thisWeek,function(i,item) {
             item=item.split('|');
             columns.push({
                 text: item[0],
@@ -290,16 +296,16 @@
                 valign: 'center',
                 width: 10,
                 bind: item[1],
-                render: function (cell,data) {
+                render: function(cell,data) {
                     cell.append(cell.data.data);
                 }
             });
 
-            $.each(data,function (j,dataItem) {
+            $.each(data,function(j,dataItem) {
 
                 var str='';
                 if(schedules) {
-                    $.each(schedules,function (ii,schedule) {
+                    $.each(schedules,function(ii,schedule) {
                         if(item[1]==schedule.DateStr&&dataItem.time==schedule.Time)
                             str+=schedule.LessonName+schedule.TeacherName+"<br>"
                     });
@@ -323,7 +329,7 @@
 
         var currentIndex;
 
-        $('#grid').on('click','li.gridCell:not(:first-child)',function (e) {
+        $('#grid').on('click','li.gridCell:not(:first-child)',function(e) {
             var target=$(e.currentTarget);
 
             $('#grid').find('.gridCell').removeClass('selected');

@@ -1,12 +1,49 @@
 ﻿@{
+    int id = int.Parse(Model["id"]);
+
+    dynamic data;
+    dynamic category;
+    string parentName;
+    int parentId;
+    IList<dynamic> list;
+
+    using (var db = SL.Data.Database.Open())
+    {
+        data = db.QuerySingle("select NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,b.ParentID,Cover,Content,PublishTime,Tags,a.Sort,Guide from News a left join NewsCategory b on a.CategoryID=b.CategoryID where NewsID=@p0", id);
+
+        parentName = data.ParentID == 0 ? data.CategoryName : db.QueryValue<string>("select CategoryName from NewsCategory where CategoryID=@p0", data.ParentID);
+
+        parentId = data.ParentID == 0 ? data.CategoryID : data.ParentID;
+
+        list = db.Query("select CategoryID,CategoryName,ParentID from NewsCategory where ParentID=@p0 order by Sort desc", data.ParentID == 0 ? id : data.ParentID);
+
+        category = data.ParentID == 0 ? (list == null ? null : list.FirstOrDefault()) : data;
+    }
+
     ViewBag.Title = "新闻";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <div class="headerwrap">
-    <div class="index_slider">
-        <ul class="slide clearfix js_slide">
-            <li style="background-image: url(@Url.Content("~/Theme/Images/1.jpg"))"></li>
-        </ul>
-    </div>
+    <div style="width:100%;background: url(@Url.Content("~/Theme/Images/" + parentId + ".jpg")) no-repeat center center;height:542px; position:absolute; "></div>
     @Html.Partial("_Header", "about")
+</div>
+<div class="main newswrap clearfix">
+    <div class="new_sidebar">
+        <dl>
+            <dt>@parentName</dt>
+            @if (null != list)
+            {
+                foreach (var item in list)
+                { 
+                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="@(Url.Content("~/NewsList"))/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
+                }
+            }
+        </dl>
+    </div>
+    <div class="news_content"><h1 class="title">@(new MvcHtmlString(data.Title))</h1>
+        <div class="date">@(data.PublishTime.ToString("yyyy-MM-dd"))</div>
+        <div class="article">
+            @(new MvcHtmlString(data.Content))
+        </div>
+    </div>
 </div>

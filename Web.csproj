@@ -97,6 +97,7 @@
     <Content Include="js\extentions\area.js" />
     <Content Include="js\extentions\qty.js" />
     <Content Include="js\manage\settings.js" />
+    <Content Include="js\site\user.js" />
     <Content Include="js\slider.js" />
     <Content Include="js\sl\plugins\template.js" />
     <Content Include="js\sl\style.js" />
@@ -340,13 +341,15 @@
     <Content Include="js\lib\validation.js" />
     <Content Include="js\seajs\sea.js" />
     <Content Include="theme\ie.css" />
-    <Content Include="theme\images\bg.jpg" />
+    <Content Include="theme\images\1.jpg" />
+    <Content Include="theme\images\2.jpg" />
+    <Content Include="theme\images\3.jpg" />
+    <Content Include="theme\images\4.jpg" />
     <Content Include="theme\images\ico_loading.gif" />
     <Content Include="theme\images\logo.png" />
-    <Content Include="theme\images\playbg.jpg" />
-    <Content Include="theme\images\prizebg.png" />
     <Content Include="theme\images\site.png" />
     <Content Include="theme\style.css" />
+    <Content Include="upload\test.jpg" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -420,7 +423,7 @@
     <Content Include="Views\Json\Secret.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Json\Register.cshtml" />
+    <Content Include="Views\Json\User\Register.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Json\Region.cshtml" />
@@ -487,6 +490,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\News\NewsList.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Lesson\Lessons.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

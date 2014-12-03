@@ -1,4 +1,4 @@
-﻿define(function (require,exports,module) {
+﻿define(function(require,exports,module) {
     var $=require('jquery'),
         util=require('lib/util'),
         drag=require('lib/drag'),
@@ -15,7 +15,7 @@
 
     var Mask={
         maskTmpl: maskTmpl,
-        resize: function () {
+        resize: function() {
             var me=this;
             me._mask&&me._mask.css({
                 width: doc.outerWidth(),
@@ -23,7 +23,7 @@
             });
         },
         _visible: false,
-        show: function () {
+        show: function() {
             var me=this;
             if(me._visible) return;
             me._visible=true;
@@ -39,7 +39,7 @@
                 height: doc.outerHeight()
             }).fadeIn();
         },
-        hide: function () {
+        hide: function() {
             var me=this;
             if(me._visible==false) return;
 
@@ -57,6 +57,7 @@
                 title: '',
                 width: 350,
                 height: null,
+                drag: true,
                 content: '',
                 onContentLoad: null
             },options);
@@ -65,7 +66,7 @@
     };
 
     Dialog.prototype={
-        _init: function () {
+        _init: function() {
             var me=this,
                 options=me._options,
                 width=options.width,
@@ -78,10 +79,10 @@
                 content=$('<div class="dialog_content"></div>').appendTo(body);
 
             container.addClass('dialog_fixed');
-            drag(title,container);
+            options.drag?drag(title,container):title.css({ cursor: 'default' });
 
             content.append(options.content).children().show();
-            title.find('.dialog_close').click(function () {
+            title.find('.dialog_close').click(function() {
                 if(options.onCloseClick&&options.onCloseClick.call(me)===false) return;
                 me.hide();
             });
@@ -96,7 +97,7 @@
             onContentLoad=options.onContentLoad;
             if(onContentLoad) onContentLoad.call(this);
         },
-        translate: function (dialog) {
+        translate: function(dialog) {
             var me=this,
                 container=me.container,
                 content=me._content,
@@ -155,14 +156,14 @@
                 },{
                     duration: 300,
                     easing: 'easeOutQuad',
-                    step: function (now,fx) {
+                    step: function(now,fx) {
                         if(fx.prop=='left') {
                             body.css({
                                 'margin-left': (new Date().getTime()-fx.startTime)/300*(marginEnd-marginStart)+marginStart
                             })
                         }
                     },
-                    complete: function () {
+                    complete: function() {
                         d_content.css({
                             width: '',
                             'float': ''
@@ -191,10 +192,10 @@
                     }
                 });
         },
-        find: function (selector) {
+        find: function(selector) {
             return this._content.find(selector);
         },
-        content: function (content) {
+        content: function(content) {
             var me=this;
             if(typeof content!=='undefined') {
                 me._content.html('').append(content);
@@ -203,17 +204,17 @@
 
             return me._content;
         },
-        center: function () {
+        center: function() {
             var me=this;
             var container=me.container;
             if(container.css('display')!='none') {
                 if(me._centerTimer) clearTimeout(me._centerTimer);
-                me._centerTimer=setTimeout(function () {
+                me._centerTimer=setTimeout(function() {
                     container.animate({
                         left: (win.width()-container.outerWidth())/2,
                         top: Math.max(0,(win.height()-container.outerHeight())/2),
                         opacity: 1
-                    },300,function () {
+                    },300,function() {
                         me._centerTimer=null;
                     });
                 },200);
@@ -221,7 +222,7 @@
             return me;
         },
         _visible: false,
-        show: function () {
+        show: function() {
             var me=this,
                 container=this.container;
 
@@ -246,7 +247,7 @@
 
             return me;
         },
-        hide: function () {
+        hide: function() {
             var me=this;
 
             if(me._visible) {
@@ -260,7 +261,7 @@
 
             return me;
         },
-        title: function (title) {
+        title: function(title) {
             if(typeof title!='undefined') {
                 this._title.html(title);
                 return this;
@@ -300,7 +301,7 @@
     $.extend(IFrame.prototype,Dialog.prototype);
 
     var iframeGuid=0;
-    IFrame.prototype._init=function () {
+    IFrame.prototype._init=function() {
         var options=this._options;
         this.frameName='__popup_'+iframeGuid;
         var iframe=$(tmpl('<iframe frameborder="0" name="'+this.frameName+'" scrolling="auto" src="${url}" width="${width}" height="${height}"></iframe>',options));
@@ -313,11 +314,11 @@
     };
 
     IFrame.prototype.constructor=IFrame;
-    IFrame.prototype.load=function (url) {
+    IFrame.prototype.load=function(url) {
         window.open(url,this.frameName);
         return this;
     };
-    IFrame.prototype.resize=function (width,height) {
+    IFrame.prototype.resize=function(width,height) {
         var that=this,
             container=this.container,
             frame=this.frame;
@@ -327,7 +328,7 @@
             height: height
         },{
             duration: 400,
-            step: function (now,fx) {
+            step: function(now,fx) {
                 container.css({
                     width: parseInt(frame.width())+20
                 }).css({

@@ -1,6 +1,8 @@
 ﻿define(function (require) {
     var jQuery=require('jquery');
 
+    require('./jquery.datepicker.css')
+
     Date.prototype.getWeekNumber=function () {
         var e=new Date(this.getFullYear(),this.getMonth(),this.getDate(),0,0,0),
 	t=e.getDay()+1;

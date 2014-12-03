@@ -2,46 +2,116 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <div class="headerwrap">
-    <div class="index_slider">
-        <ul class="slide clearfix js_slide">
-            <li style="background-image: url(/upload/test.jpg)"></li>
-            <li style="background-image: url(/upload/test.jpg)"></li>
-            <li style="background-image: url(/upload/test.jpg)"></li>
-        </ul>
+    <div class="index_slider_wrap">
+        <div class="index_slider">
+            <ul class="slide clearfix js_slide">
+                <li style="background-image: url(/upload/test.jpg)"></li>
+                <li style="background-image: url(/upload/test.jpg)"></li>
+                <li style="background-image: url(/upload/test.jpg)"></li>
+            </ul>
+        </div>
         <ol class="js_slide_tigger">
             <li class="curr"></li>
             <li></li>
             <li></li>
         </ol>
     </div>
-    @Html.Partial("_Header","home")
-    <div class="registercardwarp">
+    @Html.Partial("_Header", "home")
+    <div class="registercardwarp js_register_con">
         <div class="registercard">
             <div class="hd">注册免费预约英语测试</div>
             <div class="hdtip">获得您的免费测试机会</div>
             <div class="bd">
                 <ul>
-                    <li><input placeholder="姓名" /></li>
-                    <li><input placeholder="电话" /></li>
-                    <li><input placeholder="电子邮件" /></li>
-                    <li><input placeholder="年龄" /></li>
+                    <li><input class="js_username" placeholder="姓名" /></li>
+                    <li><input class="js_mobile" placeholder="电话" /></li>
+                    <li><input class="js_email" placeholder="电子邮件" /></li>
+                    <li><input class="js_birth" placeholder="年龄" /></li>
                 </ul>
             </div>
-            <div class="action"><input class="btn_register" type="button" value="获得您的免费测试机会" /></div>
+            <div class="action"><input class="btn_register js_register" type="button" value="获得您的免费测试机会" /></div>
         </div>
     </div>
 </div>
-<div class="boxwrap">
+<div class="boxwrap clearfix">
+    @{ var settings = SL.Web.Service.SettingService.GetImages("new"); }
     <div class="box" data-setting="images" data-name="new">
-        <div class="boxhd"><a class="more">MORE></a>最新资讯</div>
-        <div class="boxbd"></div>
+        <div class="boxhd"><a class="more" href="/NewsList/3.html">MORE></a><a href="/NewsList/3.html">最新资讯</a></div>
+        <div class="boxbd">
+            @if (settings != null && settings.Count != 0)
+            {
+                <div class="tab">
+                    <ul class="tabhd">
+                        @foreach (var item in settings)
+                        {
+                            <li>@(item.Title)</li>
+                        }
+                    </ul>
+                    <ul class="tabhd">
+                        @foreach (var item in settings)
+                        {
+                            <li class="img_art_wrap">
+                                <div class="img"><img src="@(item.Src)" /></div>
+                                <div class="con">@(new MvcHtmlString(item.Description))</div>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <text><div style="padding: 50px; text-align: center;">暂无数据</div></text>
+            }
+        </div>
+    </div>
+</div>
+<div class="boxwrap line3warp clearfix" data-setting="images" data-name="index">
+    @{ settings = SL.Web.Service.SettingService.GetImages("index"); }
+    @if (settings != null && settings.Count != 0)
+    {
+        <div class="box">
+            @foreach (var item in settings)
+            {
+                <div class="boxhd"><a class="more" href="@item.Url">MORE></a><a href="@item.Url">@item.Title</a></div>
+                <div class="boxbd">
+                    <div class="img_art_wrap">
+                        <div class="img"><img src="@(item.Src)" /></div>
+                        <div class="con">@(new MvcHtmlString(item.Description))</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <text><div style="padding: 50px; text-align: center;">暂无数据</div></text>
+    }
+</div>
+<div class="boxwrap i_aboutwarp clearfix" data-setting="images" data-name="about">
+    @{ settings = SL.Web.Service.SettingService.GetImages("about"); }
+    <div class="box">
+        <div class="boxhd"><a class="more" href="/newslist/1.html">MORE></a><a href="/newslist/1.html">关于我们</a></div>
+        @if (settings != null && settings.Count != 0)
+        {
+            foreach (var item in settings)
+            {
+            <div class="boxbd">
+                <div class="img_art_wrap">
+                    <div class="img"><img src="@(item.Src)" /></div>
+                    <div class="con">@(new MvcHtmlString(item.Description))</div>
+                </div>
+            </div>
+            }
+        }
+        else
+        {
+            <text><div style="padding: 50px; text-align: center;">暂无数据</div></text>
+        }
     </div>
 </div>
 <script>
-    seajs.use('manage/settings')
-</script>
-<script>
-    seajs.use(['$','lib/util','slider'],function ($,util,Slider) {
+    seajs.use(['$','lib/util','slider'],function($,util,Slider,user) {
         new Slider({ slide: '.js_slide',items: '.js_slide li',triggers: '.js_slide_tigger li' });
+
     }); 
 </script>

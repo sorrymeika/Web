@@ -16,9 +16,19 @@ namespace SL.Web.Service
             return SessionUtil.Exist("USERINFO");
         }
 
-        public static IDictionary<string, object> GetUser()
+        public static string CreateAuth(string seed, string seed1)
         {
-            return SessionUtil.Get<IDictionary<string, object>>("USERINFO");
+            return Md5.MD5(seed + DateTime.Now.ToString("yyyyMMddHHmmssffff") + seed1);
+        }
+
+        public static dynamic GetUser()
+        {
+            return SessionUtil.Get<dynamic>("USERINFO");
+        }
+
+        public static dynamic SetUser(dynamic userinfo)
+        {
+            return SessionUtil.Get<dynamic>("USERINFO");
         }
 
         public static dynamic GetUserFullInfo()

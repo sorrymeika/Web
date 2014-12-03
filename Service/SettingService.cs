@@ -19,8 +19,9 @@ namespace SL.Web.Service
                     a.Src = SL.Util.RequestFile.GetCompressedImageSrc(a.Src);
                     return true;
                 });
-            }
 
+                return data.OrderByDescending(a => a.Sort).ToList();
+            }
             return data;
         }
 

@@ -1,0 +1,47 @@
+﻿@using SL.Util
+@using SL.Data
+@{
+    RequestUtil req = new RequestUtil();
+    string email = req.Email("email", false, "请填写邮箱");
+    string userName = req.String("username", false, "请填写姓名");
+    string birthday = req.String("birthday", false, "请选择生日");
+    string mobile = req.String("mobile", false, "请填写手机", @"^1\d{10}$", "请填写正确的手机号");
+
+    if (req.HasError)
+    {
+        Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+        return;
+    }
+
+    if (SQL.Exists("select 1 from Users where Mobile=@p0 or Email=@p1", mobile, email))
+    {
+        Json.Write(new { success = true, msg = "该手机或电子邮箱已注册" }, Output);
+        return;
+    }
+    else
+    {
+        int uid;
+        DateTime date = DateTime.Now;
+        string auth = SL.Web.Service.UserService.CreateAuth(email, mobile);
+        string md5auth = Md5.MD5(auth);
+
+        var result = SQL.Execute("insert into Users (Email,UserName,Mobile,Auth,RegisterDate,LatestLoginDate) values (@p0,@p1,@p2,@p3,@p4,@p4)", out uid, email, userName, mobile, md5auth, date);
+
+        dynamic user = new DynamicRecord(new Dictionary<string, object>());
+
+        user.UserID = uid;
+        user.UserName = userName;
+        user.Email = email;
+        user.Birthday = birthday;
+        user.Auth = auth;
+        user.Mobile = mobile;
+        user.LatestLoginDate = date.ToString("yyyy-MM-dd HH:mm:ss");
+
+        SL.Web.Service.UserService.SetAuth(email, md5auth);
+
+        SessionUtil.Set("USERINFO", user);
+
+        Json.Write(new { success = true, auth = auth }, Output);
+        return;
+    }
+}

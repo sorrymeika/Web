@@ -20,17 +20,34 @@
 </head>
 <body>
     @RenderBody()
+    <div class="footer">
+        <div class="clearfix" data-name="nav"><a href="/">首页</a> | <a href="/NewsList/1.html">关于我们</a> | <a href="/lessons.html">课程展示</a> | <a href="/teachers.html">名师介绍</a> | <a href="/NewsList/2.html">GK Youth</a> | <a href="/NewsList/3.html">最新资讯</a> | <a href="/NewsList/4.html">帮助中心</a> </div>
+        <div class="copyright">上海XXXXXXX有限公司 COPY RIGHT ©2008 Response Information 版权所有<br>
+            公司地址：上海市浦东大道2000号阳光世界大厦26楼 公司电话：8621-54330379 <!--© Signum International S.a r.l Luxembourg Luzern Branch, EF英孚教育集团旗下公司，版权所有。ICP 沪B2-20070075 上海英培商务咨询有限公司ICP 粵B2-20060734 广州英培商务咨询有限公司© Signum International S.a r.l Luxembourg Luzern Branch, EF英孚教育集团旗下公司，版权所有。务咨询有限公司ICP 粵B2-20060734 广州英培商务咨询有限公司© Signum International S.a r.l Luxembourg Luzern Branch, EF英孚教育集团旗下公司，版权所有。
+-->
+        </div>
+    </div>
+    @if (Request.QueryString["manage"] == "admin")
+    {
+        <script>
+            seajs.use(['manage/settings'],function($) { });
+        </script>
+    }
     <script>
-        seajs.use(['$'],function ($) {
+
+
+        seajs.use(['$','site/user'],function($,user) {
+
+
             if($.browser.msie) {
-                $('input[placeholder]').each(function () {
+                $('input[placeholder]').each(function() {
                     var $input=$(this);
 
-                    var blur=function () {
+                    var blur=function() {
                         $input.val()==''&&$input.css({ color: '#999' }).val($input.attr('placeholder'));
                     };
                     blur();
-                    $(this).on('focus',function () {
+                    $(this).on('focus',function() {
                         $input.val()==$input.attr('placeholder')&&$input.css({ color: '' }).val('');
 
                     }).on('blur',blur);

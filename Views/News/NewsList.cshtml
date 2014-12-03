@@ -16,6 +16,7 @@
 
     dynamic data;
     dynamic category;
+    int parentId;
     string parentName;
     IList<dynamic> list;
     IList<dynamic> news = null;
@@ -24,6 +25,7 @@
     using (var db = SL.Data.Database.Open())
     {
         data = db.QuerySingle("select CategoryID,CategoryName,ParentID from NewsCategory where CategoryID=@p0", id);
+        parentId = data.ParentID == 0 ? data.CategoryID : data.ParentID;
         parentName = data.ParentID == 0 ? data.CategoryName : db.QueryValue<string>("select CategoryName from NewsCategory where CategoryID=@p0", data.ParentID);
         list = db.Query("select CategoryID,CategoryName,ParentID from NewsCategory where ParentID=@p0 order by Sort desc", data.ParentID == 0 ? id : data.ParentID);
 
@@ -39,7 +41,7 @@
             }
 
             news = db.QueryPage("NewsID",
-                "NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,Cover,Content,PublishTime,Tags,a.Sort,Guide",
+                "NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,Cover,PublishTime,Tags,a.Sort,Guide",
                 "News a left join NewsCategory b on a.CategoryID=b.CategoryID",
                 where,
                 page,
@@ -73,20 +75,19 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <div class="headerwrap">
-    <div class="index_slider">
-        <ul class="slide clearfix js_slide">
-            <li style="background-image: url(@Url.Content("~/Theme/Images/" + id + ".jpg"))"></li>
-        </ul>
-    </div>
-    @Html.Partial("_Header", "about")
+    <div style="width:100%;background: url(@Url.Content("~/Theme/Images/" + parentId + ".jpg")) no-repeat center center;height:542px; position:absolute; "></div>
+    @Html.Partial("_Header", "news" + parentId)
 </div>
 <div class="main newswrap clearfix">
     <div class="new_sidebar">
         <dl>
             <dt>@parentName</dt>
-            @foreach (var item in list)
-            { 
+            @if (null != list)
+            {
+                foreach (var item in list)
+                { 
                 <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="@(Url.Content("~/NewsList"))/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
+                }
             }
         </dl>
     </div>
