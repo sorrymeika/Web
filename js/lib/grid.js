@@ -405,7 +405,7 @@
                                 .blur(function () {
                                     cell.validate();
                                 })
-                                .val(cellValue);
+                                .val(val);
                             cell.textbox=textbox;
                             cell.append(textbox);
                             cell.onChange=function (a) {

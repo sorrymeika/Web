@@ -19,12 +19,12 @@ namespace SL.Web.Controllers
         {
             this.ViewBag.RouteData = this.RouteData.Values;
 
-            return View("~/Views/" + catalog + (string.IsNullOrEmpty(handle) ? "" : "/" + handle) + ".cshtml");
+            return View("~/Views/" + catalog + (string.IsNullOrEmpty(handle) ? "" : "/" + handle) + ".cshtml", this.RouteData.Values);
         }
 
         public ActionResult JsonAction(string catalog, string handle)
         {
-            return View("~/Views/Json/" + catalog + (string.IsNullOrEmpty(handle) ? "" : "/" + handle) + ".cshtml");
+            return View("~/Views/Json/" + catalog + (string.IsNullOrEmpty(handle) ? "" : "/" + handle) + ".cshtml", this.RouteData.Values);
         }
 
         [ValidateInput(false)]

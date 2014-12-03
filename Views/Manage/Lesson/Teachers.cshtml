@@ -5,13 +5,10 @@
 
     if ("add" == Request.QueryString["action"])
     {
-        string title = req.String("title", false, "need title");
-        string subTitle = req.String("subtitle");
-        int categoryId = req.Int("categoryId", false, "need categoryid");
-        string content = req.String("content", false, "need content");
-        string guide = req.String("guide", false, "need guide");
+        string teacherName = req.String("teacherName", false, "need teacherName");
+        string description = req.String("description", false, "need description");
         var cover = req.File("cover");
-        string tags = req.String("tags");
+        var video = req.File("video", exts: "mp4|flv|wav", extText: "请上传mp4格式的视频");
         int sort = req.Int("sort");
 
         if (req.HasError)
@@ -21,8 +18,9 @@
         }
 
         string src = cover.IsEmpty ? null : cover.Save();
+        string videoSrc = video.IsEmpty ? null : video.Save();
 
-        SQL.Execute("insert into News (Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort,Guide) values (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8)", title, subTitle, categoryId, src, content, DateTime.Now, tags, sort);
+        SQL.Execute("insert into Teacher (TeacherName,Cover,Description,Sort,Video) values (@p0,@p1,@p2,@p3,@p4)", teacherName, src, description, sort, videoSrc);
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -30,13 +28,10 @@
     else if ("modify" == Request.QueryString["action"])
     {
         int id = req.Int("id", false, "need id");
-        string title = req.String("title", false, "need title");
-        string subTitle = req.String("subtitle");
-        int categoryId = req.Int("categoryId", false, "need categoryid");
-        string guide = req.String("guide", false, "need guide");
-        string content = req.String("content", false, "need content");
+        string teacherName = req.String("teacherName", false, "need title");
+        string description = req.String("description", false, "need description");
         var cover = req.File("cover");
-        string tags = req.String("tags");
+        var video = req.File("video", exts: "mp4|flv|wav", extText: "请上传mp4格式的视频");
         int sort = req.Int("sort");
 
         if (req.HasError)
@@ -46,11 +41,11 @@
         }
 
         string set = "";
-        List<object> parameters = new List<object> { id, title, subTitle, categoryId, content, tags, sort, guide };
+        List<object> parameters = new List<object> { id, teacherName, description, sort };
 
         if (!cover.IsEmpty)
         {
-            string origSrc = SQL.QueryValue<string>("select Cover from News where NewsID=@p0", id);
+            string origSrc = SQL.QueryValue<string>("select Cover from Teacher where TeacherID=@p0", id);
 
             RequestFile.Delete(origSrc);
             string src = cover.Save();
@@ -59,7 +54,18 @@
             parameters.Add(src);
         }
 
-        SQL.Execute("update News set Title=@p1,SubTitle=@p2,CategoryID=@p3,Content=@p4,Tags=@p5,Sort=@p6,Guide=@p7" + set + " where NewsID=@p0", parameters.ToArray());
+        if (!video.IsEmpty)
+        {
+            string origSrc = SQL.QueryValue<string>("select Video from Teacher where TeacherID=@p0", id);
+
+            RequestFile.Delete(origSrc);
+            string src = video.Save();
+
+            set = ",Video=@p" + parameters.Count;
+            parameters.Add(src);
+        }
+
+        SQL.Execute("update Teacher set TeacherName=@p1,Description=@p2,Sort=@p3" + set + " where TeacherID=@p0", parameters.ToArray());
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -74,149 +80,86 @@
             return;
         }
 
-        string origSrc = SQL.QueryValue<string>("select Cover from News where NewsID=@p0", id);
+        string origSrc = SQL.QueryValue<string>("select Cover from Teacher where TeacherID=@p0", id);
 
         RequestFile.Delete(origSrc);
 
-        SQL.Execute("delete from News where NewsID=@p0", id);
+        origSrc = SQL.QueryValue<string>("select Video from Teacher where TeacherID=@p0", id);
+
+        RequestFile.Delete(origSrc);
+
+        SQL.Execute("delete from Teacher where TeacherID=@p0", id);
 
         HtmlUtil.Output(new { success = true });
         return;
     }
-    else if ("get" == Request.QueryString["action"])
-    {
-        int id = req.Int("id");
-        var data = SQL.QuerySingle("select NewsID,Title,SubTitle,CategoryID,Cover,Content,PublishTime,Tags,Sort,Guide where NewsID=@p0", id);
-
-        HtmlUtil.Output(new { success = true, data = data });
-        return;
-    }
     else if ("query" == Request.QueryString["action"])
     {
-        int page = req.Int("page", defaultValue: 1);
-        int pageSize = req.Int("pageSize", defaultValue: 10);
         string keywords = req.String("keywords");
-        int categoryId = req.Int("categoryId");
 
         string where = "1=1";
         List<object> parameters = new List<object>();
 
-        if (categoryId != 0)
-        {
-            where += " and a.CategoryID=@p" + parameters.Count;
-            parameters.Add(categoryId);
-        }
         if (!string.IsNullOrEmpty(keywords))
         {
-            where += " and (a.Title like '%'+@p" + parameters.Count + "+'%' or a.Tags like '%'+@p" + parameters.Count + "+'%')";
+            where += " and (TeacherName like '%'+@p" + parameters.Count + "+'%')";
             parameters.Add(keywords);
         }
 
-        int total;
-
-        var data = SQL.QueryPage("NewsID",
-            "NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,Cover,Content,PublishTime,Tags,a.Sort,Guide",
-            "News a left join NewsCategory b on a.CategoryID=b.CategoryID",
-            where,
-            page,
-            pageSize,
-            parameters,
-            out total,
-            new Dictionary<String, bool>
-            {
-                { "Sort", false },
-                { "PublishTime", false },
-            });
+        var data = SQL.Query("select TeacherID,TeacherName,Cover,Video,Description,Sort from Teacher where " + where + " order by Sort desc", parameters.ToArray());
 
         if (data != null)
         {
             data.All(a =>
             {
                 a.Cover = RequestFile.FullUrl(a.Cover);
+                a.Video = RequestFile.FullUrl(a.Video);
                 return true;
             });
         }
 
-        HtmlUtil.Output(new { success = true, data = data, total = total });
+        HtmlUtil.Output(new { success = true, data = data });
         return;
     }
 
-    ViewBag.Title = "新闻管理";
+    ViewBag.Title = "教师管理";
     Layout = "~/Views/Shared/_ManageLayout.cshtml";
-
-    var categories = SQL.Query("select CategoryID as value,CategoryName as text,ParentID from NewsCategory order by Sort desc,CategoryID asc");
-
-    List<dynamic> parents = categories == null ? null : categories.Where(a => a.ParentID == 0).ToList();
-    List<dynamic> result = new List<dynamic>();
-
-    if (null != parents)
-    {
-        parents.All(a =>
-        {
-            result.Add(a);
-            result.AddRange(categories.Where(b => (int)b.ParentID == (int)a.value).Select(c => new
-            {
-                c.value,
-                text = "　　" + c.text
-            }));
-            return true;
-        });
-    }
 }
-<h1>新闻管理</h1>
+<h1>教师管理</h1>
 <div id="toolbar" class="toolbar"></div>
 <div id="grid"></div>
-<script>
-var categories=@(new MvcHtmlString(Json.Encode(result)));
-</script>
 <script>
     seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
 
         //添加
         var addingDialog=new popup.Form({
             url: '?action=add',
-            title: '添加新闻',
-            width: 820,
-            height: 500,
+            title: '添加教师',
+            width: 600,
+            height: 400,
             controls: {
-                title: {
-                    label: '新闻标题',
+                teacherName: {
+                    label: '教师姓名',
                     type: 'text',
                     emptyAble: false,
-                    emptyText: '请填写新闻标题'
-                },
-                subtitle: {
-                    label: '子标题',
-                    type: 'text'
-                },
-                categoryId: {
-                    label: '类别',
-                    type: 'select',
-                    emptyAble: false,
-                    options: categories
+                    emptyText: '请填写教师姓名'
                 },
                 cover: {
-                    label: '封面图片',
+                    label: '图片',
                     type: 'file'
                 },
-                tags: {
-                    label: '标签',
-                    type: 'text'
+                video: {
+                    label: '视频',
+                    type: 'file'
                 },
                 sort: {
                     label: '排序',
                     type: 'text',
                     value: '0'
                 },
-                guide: {
-                    label: '导读',
+                description: {
+                    label: '教师描述',
                     type: 'textarea',
-                    emptyAble: false,
-                    emptyText: '请填写导读'
-                },
-                content: {
-                    label: '正文',
-                    type: 'html',
                     emptyAble: false,
                     emptyText: '请填写正文'
                 }
@@ -249,51 +192,35 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
         //修改
         var modifyingDialog=new popup.Form({
             url: '?action=modify',
-            title: '修改新闻',
-            width: 820,
-            height: 500,
+            title: '修改教师',
+            width: 600,
+            height: 400,
             controls: {
                 id: {
                     type: 'hidden'
                 },
-                title: {
-                    label: '新闻标题',
+                teacherName: {
+                    label: '教师名称',
                     type: 'text',
                     emptyAble: false,
-                    emptyText: '请填写新闻标题'
-                },
-                subtitle: {
-                    label: '子标题',
-                    type: 'text'
-                },
-                categoryId: {
-                    label: '类别',
-                    type: 'select',
-                    emptyAble: false,
-                    options: categories
+                    emptyText: '请填写教师名称'
                 },
                 cover: {
-                    label: '封面图片',
+                    label: '图片',
                     type: 'file'
                 },
-                tags: {
-                    label: '标签',
-                    type: 'text'
+                video: {
+                    label: '视频',
+                    type: 'file'
                 },
                 sort: {
                     label: '排序',
                     type: 'text',
                     value: '0'
                 },
-                guide: {
-                    label: '导读',
+                description: {
+                    label: '教师描述',
                     type: 'textarea',
-                    emptyAble: false,
-                    emptyText: '请填写导读'
-                },
-                content: {
-                    label: '正文',
-                    type: 'html',
                     emptyAble: false,
                     emptyText: '请填写正文'
                 }
@@ -324,7 +251,7 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
         });
 
         var buttons=new Buttons("#toolbar",[{
-            text: "添加新闻",
+            text: "添加",
             ico: 'add',
             click: function () {
                 addingDialog.show();
@@ -335,15 +262,10 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
             disabled: true,
             click: function () {
                 var data=grid.selectedRow().data;
-                modifyingDialog.control("id").val(data.NewsID);
-                modifyingDialog.control("title").val(data.Title);
+                modifyingDialog.control("id").val(data.TeacherID);
+                modifyingDialog.control("teacherName").val(data.TeacherName);
                 modifyingDialog.control("sort").val(data.Sort);
-                modifyingDialog.control("tags").val(data.Tags);
-                modifyingDialog.control("subtitle").val(data.SubTitle);
-                modifyingDialog.control("categoryId").val(data.CategoryID);
-                modifyingDialog.control("content").val(data.Content);
-                modifyingDialog.control("guide").val(data.Guide);
-                modifyingDialog.editor("content").html(data.Content);
+                modifyingDialog.control("description").val(data.Description);
                 modifyingDialog.show();
             }
         },{
@@ -358,7 +280,7 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
                     url: '?action=delete',
                     type: 'post',
                     data: {
-                        id: data.NewsID
+                        id: data.LessionID
                     },
                     dataType: 'json',
                     success: function (res) {
@@ -372,17 +294,9 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
             }
         }]);
 
-        categories.splice(0,0,{ text: '请选择',value: '' })
-
         var grid=$('#grid').grid({
-            pageEnabled: true,
             search: {
                 data: {
-                    categoryid: {
-                        label: '类别',
-                        type: 'select',
-                        options: categories
-                    },
                     keywords: {
                         label: '关键字',
                         type: 'text'
@@ -398,20 +312,16 @@ var categories=@(new MvcHtmlString(Json.Encode(result)));
             },
             columns: [{
                 text: '编号',
-                bind: 'NewsID',
+                bind: 'TeacherID',
                 width: 6
             },{
-                text: '标题',
-                bind: 'Title',
+                text: '教师名',
+                bind: 'TeacherName',
                 width: 10
             },{
-                text: '副标题',
-                bind: 'SubTitle',
+                text: '教师描述',
+                bind: 'Description',
                 width: 10
-            },{
-                text: '类别',
-                bind: 'CategoryName',
-                width: 6
             },{
                 text: '排序',
                 bind: 'Sort',

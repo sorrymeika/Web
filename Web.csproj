@@ -470,6 +470,24 @@
   <ItemGroup>
     <Content Include="Views\Manage\News\News.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Manage\Lesson\Lessons.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Manage\Lesson\Teachers.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Manage\Lesson\Schedule.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Manage\Users\Users.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\News\News.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\News\NewsList.cshtml" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

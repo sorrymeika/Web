@@ -1,0 +1,111 @@
+﻿@{
+    int id = int.Parse(Model["id"]);
+    var req = new SL.Util.RequestUtil();
+    int page = req.Int("page", defaultValue: 1);
+    int pageSize = req.Int("pageSize", defaultValue: 10);
+    string keywords = req.String("keywords");
+
+    string where = "1=1";
+    List<object> parameters = new List<object>();
+
+    if (!string.IsNullOrEmpty(keywords))
+    {
+        where += " and (a.Title like '%'+@p" + parameters.Count + "+'%' or a.Tags like '%'+@p" + parameters.Count + "+'%')";
+        parameters.Add(keywords);
+    }
+
+    dynamic data;
+    dynamic category;
+    string parentName;
+    IList<dynamic> list;
+    IList<dynamic> news = null;
+    int total;
+
+    using (var db = SL.Data.Database.Open())
+    {
+        data = db.QuerySingle("select CategoryID,CategoryName,ParentID from NewsCategory where CategoryID=@p0", id);
+        parentName = data.ParentID == 0 ? data.CategoryName : db.QueryValue<string>("select CategoryName from NewsCategory where CategoryID=@p0", data.ParentID);
+        list = db.Query("select CategoryID,CategoryName,ParentID from NewsCategory where ParentID=@p0 order by Sort desc", data.ParentID == 0 ? id : data.ParentID);
+
+        category = data.ParentID == 0 ? (list == null ? null : list.FirstOrDefault()) : data;
+
+        if (data != null || category != null)
+        {
+            int categoryId = category == null ? data.CategoryID : category.CategoryID;
+            if (categoryId != 0)
+            {
+                where += " and a.CategoryID=@p" + parameters.Count;
+                parameters.Add(categoryId);
+            }
+
+            news = db.QueryPage("NewsID",
+                "NewsID,Title,SubTitle,a.CategoryID,b.CategoryName,Cover,Content,PublishTime,Tags,a.Sort,Guide",
+                "News a left join NewsCategory b on a.CategoryID=b.CategoryID",
+                where,
+                page,
+                pageSize,
+                parameters,
+                out total,
+                new Dictionary<String, bool>
+                {
+                    { "Sort", false },
+                    { "PublishTime", false },
+                });
+
+            if (news != null)
+            {
+                news.All(a =>
+                {
+                    a.Cover = SL.Util.RequestFile.FullUrl(a.Cover);
+                    return true;
+                });
+            }
+        }
+    }
+
+    if (data == null)
+    {
+        Output.Write("404");
+        return;
+    }
+
+    ViewBag.Title = data.CategoryName;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="headerwrap">
+    <div class="index_slider">
+        <ul class="slide clearfix js_slide">
+            <li style="background-image: url(@Url.Content("~/Theme/Images/" + id + ".jpg"))"></li>
+        </ul>
+    </div>
+    @Html.Partial("_Header", "about")
+</div>
+<div class="main newswrap clearfix">
+    <div class="new_sidebar">
+        <dl>
+            <dt>@parentName</dt>
+            @foreach (var item in list)
+            { 
+                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="/NewsSubList/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
+            }
+        </dl>
+    </div>
+    <div class="news_content">
+        @if (news != null)
+        {
+            <ul>
+                @foreach (var item in news)
+                { 
+                    <li>
+                        <div class="hd">@(new MvcHtmlString(item.Title))</div>
+                        <div class="con">@(new MvcHtmlString(item.Guide))</div>
+                    </li>
+                }
+            </ul>
+        }
+        else
+        { 
+            <div>暂无数据</div>
+        }
+    </div>
+</div>
