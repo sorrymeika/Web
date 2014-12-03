@@ -86,7 +86,7 @@
             <dt>@parentName</dt>
             @foreach (var item in list)
             { 
-                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="/NewsSubList/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
+                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="@Url.Content("~/")/NewsList/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
             }
         </dl>
     </div>
@@ -97,7 +97,7 @@
                 @foreach (var item in news)
                 { 
                     <li>
-                        <div class="hd">@(new MvcHtmlString(item.Title))</div>
+                        <div class="hd"><a href="@Url.Content("~/")/news/@(item.NewsID).html">@(new MvcHtmlString(item.Title))</div>
                         <div class="con">@(new MvcHtmlString(item.Guide))</div>
                     </li>
                 }
