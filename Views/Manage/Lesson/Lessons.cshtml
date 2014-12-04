@@ -6,7 +6,9 @@
     if ("add" == Request.QueryString["action"])
     {
         string lessonName = req.String("lessonName", false, "need title");
-        string description = req.String("description", false, "need content");
+        string description = req.String("description", false, "need description");
+        decimal price = req.Decimal("price", false, "need price");
+        decimal totalPrice = req.Decimal("totalPrice", false, "need totalprice");
         var cover = req.File("cover");
         int sort = req.Int("sort");
 
@@ -18,7 +20,7 @@
 
         string src = cover.IsEmpty ? null : cover.Save();
 
-        SQL.Execute("insert into Lesson (LessonName,Cover,Description,Sort) values (@p0,@p1,@p2,@p3)", lessonName, src, description, sort);
+        SQL.Execute("insert into Lesson (LessonName,Cover,Description,Sort,Price,TotalPrice) values (@p0,@p1,@p2,@p3,@p4,@p5)", lessonName, src, description, sort, price, totalPrice);
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -28,6 +30,8 @@
         int id = req.Int("id", false, "need id");
         string lessonName = req.String("lessonName", false, "need title");
         string description = req.String("description", false, "need description");
+        decimal price = req.Decimal("price", false, "need price");
+        decimal totalPrice = req.Decimal("totalPrice", false, "need totalprice");
         var cover = req.File("cover");
         int sort = req.Int("sort");
 
@@ -38,7 +42,7 @@
         }
 
         string set = "";
-        List<object> parameters = new List<object> { id, lessonName, description, sort };
+        List<object> parameters = new List<object> { id, lessonName, description, sort, price, totalPrice };
 
         if (!cover.IsEmpty)
         {
@@ -51,7 +55,7 @@
             parameters.Add(src);
         }
 
-        SQL.Execute("update Lesson set LessonName=@p1,Description=@p2,Sort=@p3" + set + " where LessonID=@p0", parameters.ToArray());
+        SQL.Execute("update Lesson set LessonName=@p1,Description=@p2,Sort=@p3,Price=@p4,TotalPrice=@p5" + set + " where LessonID=@p0", parameters.ToArray());
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -69,8 +73,11 @@
         string origSrc = SQL.QueryValue<string>("select Cover from Lesson where LessonID=@p0", id);
 
         RequestFile.Delete(origSrc);
-
-        SQL.Execute("delete from Lesson where LessonID=@p0", id);
+        using (var db = SL.Data.Database.Open())
+        {
+            db.Execute("insert into DeletedLesson (LessonID,LessonName,Cover,Description,Sort,Price,TotalPrice) select LessonID,LessonName,Cover,Description,Sort,Price,TotalPrice from Lesson where LessonID=@p0", id);
+            db.Execute("delete from Lesson where LessonID=@p0", id);
+        }
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -88,7 +95,7 @@
             parameters.Add(keywords);
         }
 
-        var data = SQL.Query("select LessonID,LessonName,Cover,Description,Sort from Lesson where " + where + " order by Sort desc", parameters.ToArray());
+        var data = SQL.Query("select LessonID,LessonName,Cover,Description,Sort,Price,TotalPrice from Lesson where " + where + " order by Sort desc", parameters.ToArray());
 
         if (data != null)
         {
@@ -124,6 +131,22 @@
                     type: 'text',
                     emptyAble: false,
                     emptyText: '请填写课程名称'
+                },
+                price: {
+                    label: '单节价格',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写课程单节价格',
+                    regex: /^\d+(\.\d+){0,1}$/,
+                    regexText: '请填写正确的价格'
+                },
+                totalPrice: {
+                    label: '课程总价',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写课程总价',
+                    regex: /^\d+(\.\d+){0,1}$/,
+                    regexText: '请填写正确的价格'
                 },
                 cover: {
                     label: '图片',
@@ -181,6 +204,22 @@
                     type: 'text',
                     emptyAble: false,
                     emptyText: '请填写课程名称'
+                },
+                price: {
+                    label: '单节价格',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写课程单节价格',
+                    regex: /^\d+(\.\d+){0,1}$/,
+                    regexText: '请填写正确的价格'
+                },
+                totalPrice: {
+                    label: '课程总价',
+                    type: 'text',
+                    emptyAble: false,
+                    emptyText: '请填写课程总价',
+                    regex: /^\d+(\.\d+){0,1}$/,
+                    regexText: '请填写正确的价格'
                 },
                 cover: {
                     label: '图片',

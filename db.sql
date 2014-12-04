@@ -70,10 +70,26 @@ TestingStatus int
 )
 
 
+--2014-12-04
+--未发邮件更新
+alter table Lesson add Price decimal(18,2)
+alter table Lesson add TotalPrice decimal(18,2)
+
+drop table Reservation
 create table Reservation(
 ReservationID int primary key identity,
 UserID int,
-ScheduleID int
+ScheduleID int,
+--0:未付款; 1:已付款未确认 2:已确认
+PayStatus int
 )
 
-select * from Users
+create table DeletedLesson(
+LessonID int primary key,
+LessonName varchar(400),
+Cover varchar(255),
+Description varchar(1000),
+Sort int,
+Price decimal(18,2),
+TotalPrice decimal(18,2)
+)
