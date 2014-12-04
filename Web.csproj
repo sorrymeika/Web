@@ -346,8 +346,12 @@
     <Content Include="theme\images\3.jpg" />
     <Content Include="theme\images\4.jpg" />
     <Content Include="theme\images\ico_loading.gif" />
+    <Content Include="theme\images\lessons.jpg" />
     <Content Include="theme\images\logo.png" />
+    <Content Include="theme\images\schedule.jpg" />
+    <Content Include="theme\images\schedule_bg.png" />
     <Content Include="theme\images\site.png" />
+    <Content Include="theme\images\teachers.jpg" />
     <Content Include="theme\style.css" />
     <Content Include="upload\test.jpg" />
     <Content Include="Web.config">
@@ -493,6 +497,15 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Lesson\Lessons.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Json\User\IsLogin.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Lesson\Schedule.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Lesson\Teachers.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

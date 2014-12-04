@@ -8,7 +8,7 @@
         string teacherName = req.String("teacherName", false, "need teacherName");
         string description = req.String("description", false, "need description");
         var cover = req.File("cover");
-        var video = req.File("video", exts: "mp4|flv|wav", extText: "请上传mp4格式的视频");
+        var video = req.File("video", exts: "mp4|flv|wav", extText: "请上传mp4格式的视频", maxLength: 200000000);
         int sort = req.Int("sort");
 
         if (req.HasError)

@@ -1,0 +1,243 @@
+﻿@{
+    SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+    int type = req.Int("type");
+    int teacherid = req.Int("teacherid");
+    int lessonid = req.Int("lessonid");
+
+    IList<dynamic> lessons;
+    IList<dynamic> teachers;
+    IList<dynamic> schedules;
+
+    var weeks = new String[] { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
+    List<string> dates = new List<string>();
+    var thisWeek = (int)DateTime.Today.DayOfWeek;
+
+    if (type == 1)
+    {
+        thisWeek -= 7;
+    }
+
+    for (var i = 0; i < 7; i++)
+    {
+        var day = DateTime.Today.AddDays(i - thisWeek + 1);
+        weeks[i] = day.ToString("MM-dd") + weeks[i] + "|" + day.ToString("yyyy-MM-dd");
+        dates.Add("'" + day.ToString("yyyy-MM-dd") + "'");
+    }
+
+    using (SL.Data.Database db = SL.Data.Database.Open())
+    {
+        schedules = db.Query("select ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID where DateStr in (" + String.Join(",", dates) + ")");
+
+        lessons = db.Query("select LessonID,LessonName from Lesson order by Sort desc");
+        teachers = db.Query("select TeacherID,TeacherName from Teacher order by Sort desc");
+    }
+
+    ViewBag.Title = "课程介绍";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="headerwrap">
+    <div style="width:100%;background: url(@Url.Content("~/Theme/Images/Schedule.jpg")) no-repeat center center;height:542px; position:absolute; "></div>
+    @Html.Partial("_Header", "lessons")
+</div>
+<div class="main schedule">
+    <div class="schedule_list">
+        <div class="schedule_hd clearfix">
+            <div class="hd">课程查询></div>
+            <div class="schedule_select"><span>请选择课程：</span><select class="js_lessons"></select><span>请选择教师：</span><select class="js_teachers"></select></div>
+        </div>
+        <div class="schedule_notice">您查看的课程需要先测试才能预约，现在就预约测试吗？<br>
+            <a class="js_testing">点击预约测试>></a></div>
+        <div class="schedule_bd">
+            <div class="schedule_info">课程名称：<span class="js_lesson_name"></span>授课教师：<span class="js_teacher_name"></span></div>
+            <div class="schedule_table js_schedule_table"></div>
+        </div>
+        <div class="action"><input class="btn js_reserve" type="button" value="立即预约" /></div>
+    </div>
+</div>
+<script>
+    var teacherid=@(teacherid);
+    var lessonid=@(lessonid);
+    var thisWeek=@(new MvcHtmlString(Json.Encode(weeks)));
+    var schedules=@(new MvcHtmlString(Json.Encode(schedules)));
+    var teachers=@(new MvcHtmlString(Json.Encode(teachers)));
+    var lessons=@(new MvcHtmlString(Json.Encode(lessons)));
+</script>
+<script>
+    seajs.use(['jquery','site/user'],function ($,user) {
+
+        $.each(teachers,function (i,item) {
+            item.schedules=[];
+            item.lessons=[];
+
+            $.each(schedules,function (j,schedule) {
+                if(schedule.TeacherID==item.TeacherID) {
+                    item.schedules.push(schedule);
+                }
+            });
+        });
+
+        var columns=[{
+            text: '&nbsp;',
+            bind: "time"
+        }],
+        data=[{
+            time: "8:00--9:30"
+        },{
+            time: "10:00--11:30"
+        },{
+            time: "13:00--14:30"
+        },{
+            time: "15:00--16:30"
+        },{
+            time: "17:00--18:30"
+        }];
+
+        function loadSchedule(teacherid,lessonid) {
+            $('.js_teachers')[0].length=0;
+            $('.js_lessons')[0].length=0;
+
+            if(teacherid!=0) {
+                var lessonids=[];
+                $.each(teachers,function (i,item) {
+                    $('.js_teachers')[0].options.add(new Option(item.TeacherName,item.TeacherID));
+
+                    $.each(schedules,function (j,schedule) {
+                        if(schedule.TeacherID==item.TeacherID) {
+                            console.log(item.TeacherID)
+                            if($.inArray(schedule.LessonID,lessonids)== -1) {
+                                lessonids.push(schedule.LessonID);
+                            }
+                        }
+                    });
+                });
+                $.each(lessons,function (i,item) {
+                    if($.inArray(item.LessonID,lessonids)!= -1) {
+                        $('.js_lessons')[0].options.add(new Option(item.LessonName,item.LessonID));
+                    }
+                });
+                lessonid=lessonids.length?lessonids[0]:0;
+            }
+            else if(lessonid!=0) {
+                var teacherids=[];
+                $.each(lessons,function (i,item) {
+                    $('.js_lessons')[0].options.add(new Option(item.LessonName,item.LessonID));
+
+                    $.each(schedules,function (j,schedule) {
+                        if(schedule.LessonID==item.LessonID) {
+                            if($.inArray(schedule.TeacherID,teacherids)== -1) {
+                                teacherids.push(schedule.TeacherID);
+                            }
+                        }
+                    });
+                });
+                $.each(teachers,function (i,item) {
+                    if($.inArray(item.TeacherID,teacherids)!= -1) {
+                        $('.js_teachers')[0].options.add(new Option(item.TeacherName,item.TeacherID));
+                    }
+                });
+                teacherid=teacherids.length?teacherids[0]:0;
+            }
+
+            $('.js_teachers')[0].value=teacherid;
+            $('.js_lessons')[0].value=lessonid;
+
+            $.each(teachers,function (i,item) {
+                if(item.TeacherID==teacherid) {
+                    $('.js_teacher_name').html(item.TeacherName);
+                    return false;
+                }
+            });
+
+            $.each(lessons,function (i,item) {
+                if(item.LessonID==lessonid) {
+                    $('.js_lesson_name').html(item.LessonName);
+                    return false;
+                }
+            });
+
+            $.each(thisWeek,function (i,item) {
+                item=item.split('|');
+                columns.push({
+                    text: item[0],
+                    bind: item[1],
+                    render: function (data) {
+                        return data.data;
+                    }
+                });
+
+                $.each(data,function (j,dataItem) {
+                    var str='',
+                        scheduleid='';
+                    if(schedules) {
+                        $.each(schedules,function (ii,schedule) {
+                            if(item[1]==schedule.DateStr&&dataItem.time==schedule.Time&&teacherid==schedule.TeacherID&&lessonid==schedule.LessonID) {
+                                str+=schedule.LessonName+"<br>"
+                                scheduleid=schedule.LessonID;
+                            }
+                        });
+                    }
+
+                    dataItem[item[1]]={
+                        time: dataItem.time,
+                        date: item[1],
+                        dateDisplay: item[0],
+                        data: str,
+                        scheduleid: scheduleid
+                    };
+                });
+            });
+
+            var header=[],
+            html=[];
+
+            $.each(columns,function (i,column) {
+                header.push("<i"+(i==0?' class="first"':'')+">"+column.text+"</i>");
+            });
+
+            $.each(data,function (j,item) {
+                $.each(columns,function (i,column) {
+                    if(i==0) {
+                        html.push('<div class="schedule_row">');
+                    }
+                    var itemData=item[column.bind];
+                    html.push('<i'+(i==0?' class="first"':'')+' data-display="'+itemData.dateDisplay+'" data-date="'+itemData.date+'" data-time="'+itemData.time+'" data-scheduleid="'+itemData.scheduleid+'">'+((column.render?column.render(itemData):itemData)||"&nbsp;")+'</i>')
+                });
+            })
+
+            $('.js_schedule_table').html('<div class="schedule_hds">'+header.join('')+'</div><div class="schedule_bds">'+html.join('')+'</div>');
+        }
+
+        loadSchedule(teacherid,lessonid);
+
+        $('.js_schedule_table').on('click','i[data-time]:not(.first)',function (e) {
+            var $target=$(e.currentTarget);
+
+            $('.js_schedule_table').find('i').removeClass('current');
+            $target.addClass('current');
+        });
+
+        user.loading('.js_reserve',function () {
+            var $btn=this,
+                el=$('.js_schedule_table').find('i.current');
+            if(el.length==0) {
+                alert("请先选择课程");
+                return false;
+
+            } else if(!el.data('scheduleid')) {
+                alert("您选择的时间未安排课程");
+                return false;
+            }
+            return {
+                url: '/json/user/islogin',
+                success: function (res) {
+                    if(!res.isLogin) {
+                        user.showLogin();
+                    } else {
+                        alert("请稍候...");
+                    }
+                }
+            }
+        });
+
+    });
+</script>

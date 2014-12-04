@@ -20,17 +20,15 @@
     @if (data != null && data.Count != 0)
     {
         var item = data.FirstOrDefault();
-        <div class="lesson_info clearfix">
-            <div class="img"><img src="@item.Cover" />
-            </div>
-            <div class="info">
-                <p class="name">asdfasdf</p>
-                <p class="con">asdfasf</p>
-                <p class="action"><input class="btn js_start" type="button" value="立即预约"></p>
+        <div class="lesson_info clearfix js_info" data-id="@item.LessonID">
+            <div class="img"><img src="@item.Cover" /> </div>
+            <div class="info"><p class="name">@(new MvcHtmlString(item.Title))</p>
+                <p class="con">@(new MvcHtmlString(item.Description))</p>
+                <p class="action"><input class="btn js_start" data-id="@item.LessonID" type="button" value="立即预约"></p>
             </div>
         </div>
     }
-    <div class="lesson_list">
+    <div class="lesson_list js_list">
         @if (data == null || data.Count == 0)
         {
             <text><div style="padding: 50px; text-align: center;">暂无课程</div></text>
@@ -40,8 +38,7 @@
             <ul>
                 @foreach (var item in data)
                 {
-                    <li>
-                        <p class="img"><img src="@item.Cover" /></p>
+                    <li data-id="@item.LessonID" data-src="@item.Cover"><p class="img"><img src="@item.Cover" /></p>
                         <p class="name">@(new MvcHtmlString(item.Title))</p>
                         <p class="con">@(new MvcHtmlString(item.Description))</p>
                     </li>
@@ -51,6 +48,38 @@
     </div>
 </div>
 <script>
-    seajs.use(['$'],function() {
+    seajs.use(['jquery','site/user'],function ($,user) {
+
+        user.loading('.js_start',function () {
+            var $btn=this;
+
+            return {
+                url: '/json/user/islogin',
+                success: function (res) {
+                    if(!res.isLogin) {
+                        user.showLogin();
+                    } else {
+
+                        location.href="/schedule.html?lessonid="+$btn.data('id');
+                    }
+                }
+            }
+        });
+
+        $('.js_list').on('click','[data-id]',function (e) {
+            var $target=$(e.currentTarget),
+                $info=$('.js_info'),
+                id=$target.data('id');
+
+
+            if(id!=$info.data('id')) {
+                $('.js_start').data('id',id);
+                $info.data('id',id);
+                $info.find('img').attr('src',$target.data('src'));
+                $info.find('.name').html($target.find('.name').html());
+                $info.find('.con').html($target.find('.con').html());
+            }
+
+        });
     });
 </script>

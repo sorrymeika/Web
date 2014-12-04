@@ -39,7 +39,7 @@ namespace SL.Web
                 "Lesson",
                 "{handle}.html",
                 new { controller = "Core", action = "Index", catalog = "Lesson" },
-                new { handle = "^Lessons|Teacher$" }
+                new { handle = "^Lessons|Teachers|Schedule$" }
             );
 
             #region 默认

@@ -1,14 +1,14 @@
-﻿define(function(require) {
+﻿define(function (require) {
 
     var $=require('jquery');
     var popup=require('lib/popup');
     require('lib/jquery.datepicker');
 
     var user={
-        loading: function($btn,fn) {
+        loading: function ($btn,fn) {
             !($btn instanceof $)&&($btn=$($btn));
 
-            $btn.click(function(e) {
+            $btn.click(function (e) {
                 var $btn=$(e.currentTarget);
                 if(!$btn.hasClass('disabled')) {
 
@@ -25,14 +25,14 @@
                         type: 'POST',
                         dataType: 'json',
                         data: data.data,
-                        success: function(res) {
+                        success: function (res) {
                             data.success&&data.success.call($btn,res);
                         },
-                        error: (data.error||function(res) {
+                        error: (data.error||function (res) {
                             alert((res&&res.msg)||"网络错误");
                         }),
 
-                        complete: function() {
+                        complete: function () {
                             $btn.removeClass('disabled')[val]($btn.data('val'));
                         }
                     });
@@ -41,12 +41,12 @@
         }
     };
 
-    user.showLogin=function() {
+    user.showLogin=function () {
         !this.loginDialog&&(this.loginDialog=this._createLoginDialog());
         this.loginDialog.show()
     };
 
-    user._createLoginDialog=function() {
+    user._createLoginDialog=function () {
         var dialog=new popup.Dialog({
             title: '',
             drag: false,
@@ -81,16 +81,13 @@
 
     user.loginDialog=user._createLoginDialog()
 
-    user.showLogin();
-
-
     $('.js_birth').datePicker({
         clickInput: true,
         verticalOffset: 4,
         startDate: "1960-01-01"
     }).dpSetDisplayedMonth('0','1980');
 
-    user.loading('.js_register',function() {
+    user.loading('.js_register',function () {
         var $con=this.closest('.js_register_con');
 
         return {
@@ -101,7 +98,7 @@
                 email: $con.find('.js_email').val(),
                 birthday: $con.find('.js_birth').val()
             },
-            success: function(res) {
+            success: function (res) {
                 if(res.success) {
                     alert("注册成功！");
                     location.reload();
@@ -112,7 +109,7 @@
         }
     });
 
-    user.loading('.js_login',function() {
+    user.loading('.js_login',function () {
         var $con=this.closest('.js_login_con');
 
         return {
@@ -122,7 +119,7 @@
                 email: $con.find('.js_email').val(),
                 validcode: $con.find('.js_validcode').val()
             },
-            success: function(res) {
+            success: function (res) {
                 if(res.success) {
                     alert("登录成功！");
                     location.reload();
@@ -131,6 +128,10 @@
                 }
             }
         }
+    });
+
+    $('.js_nav_login').click(function () {
+        user.showLogin();
     });
 
     return user;

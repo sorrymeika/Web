@@ -29,6 +29,8 @@
 
     SessionUtil.Set("USERINFO", userinfo);
 
+    SessionUtil.Get<dynamic>("USERINFO");
+
     userinfo.Auth = null;
 
     Json.Write(new

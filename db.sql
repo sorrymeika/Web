@@ -56,6 +56,7 @@ Date datetime,
 DateDisplay varchar(20)
 )
 
+
 create table Users(
 UserID int primary key identity,
 UserName varchar(100),
@@ -64,5 +65,15 @@ Mobile varchar(20),
 Email varchar(300),
 Birthday datetime,
 LatestLoginDate datetime,
-RegisterDate datetime
+RegisterDate datetime,
+TestingStatus int
 )
+
+
+create table Reservation(
+ReservationID int primary key identity,
+UserID int,
+ScheduleID int
+)
+
+select * from Users

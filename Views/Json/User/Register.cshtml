@@ -27,7 +27,7 @@
 
         var result = SQL.Execute("insert into Users (Email,UserName,Mobile,Auth,RegisterDate,LatestLoginDate) values (@p0,@p1,@p2,@p3,@p4,@p4)", out uid, email, userName, mobile, md5auth, date);
 
-        dynamic user = new DynamicRecord(new Dictionary<string, object>());
+        dynamic user = new DynamicJsonObject(new Dictionary<string, object>());
 
         user.UserID = uid;
         user.UserName = userName;
