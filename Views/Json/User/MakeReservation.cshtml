@@ -1,0 +1,48 @@
+﻿@using SL.Util
+@{
+    var isLogin = SL.Web.Service.UserService.IsLogin();
+
+    if (!isLogin)
+    {
+        Json.Write(new { success = false, isLogin = false }, Output);
+        return;
+    }
+
+    var req = new SL.Util.RequestUtil();
+
+    int scheduleid = req.Int("scheduleid", true, "need scheduleid");
+    int teacherid = req.Int("teacherid", true, "need teacherid");
+    int lessonid = req.Int("lessonid", true, "need lessonid");
+    int buyType = req.Int("lessonid", true, "need buyType");
+    int payType = req.Int("payType", true, "need payType");
+
+    if (req.HasError)
+    {
+        Json.Write(new { success = false, msg = req.FirstError, errors = req.GetErrors() }, Output);
+        return;
+    }
+
+    int count = SL.Data.SQL.QueryValue<int>("select count(1) from Reservation where [Status]=1 and ScheduleID=@p0", scheduleid);
+
+    if (count >= 4)
+    {
+        Json.Write(new { success = false, isLogin = true, msg = "该时段课程人数已满，您可以预约下一场" }, Output);
+        return;
+    }
+    else
+    {
+        var code = RandomUtil.CreateNumbers(10);
+        var price = SL.Data.SQL.QueryValue<decimal>("select " + (buyType == 1 ? "Price" : "TotalPrice") + " from Lesson where LessonID=@p0", lessonid);
+        int reservationid;
+
+        SL.Data.SQL.Execute("insert into Reservation (UserID,ScheduleID,PayStatus,Code,BuyType,PayType,Price,[Status]) values (@p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7)", out reservationid, SL.Web.Service.UserService.GetUserID(), scheduleid, 0, code, buyType, payType, price, 1);
+
+        code = "00000000000" + reservationid.ToString();
+        code = RandomUtil.CreateNumbers(2) + code.Substring(code.Length - 8);
+
+        SL.Data.SQL.Execute("update Reservation set Code=@p1 where ReservationID=@p0", reservationid, code);
+
+        Json.Write(new { success = true, isLogin = true, code = code, reservationid = reservationid, price = price }, Output);
+        return;
+    }
+}

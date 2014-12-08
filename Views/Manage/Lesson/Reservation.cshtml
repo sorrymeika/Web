@@ -1,0 +1,186 @@
+﻿@using SL.Data
+@using SL.Util
+@{
+    RequestUtil req = new RequestUtil();
+
+    if ("modify" == Request.QueryString["action"])
+    {
+        int id = req.Int("id", false, "need id");
+
+        if (req.HasError)
+        {
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            return;
+        }
+
+        using (var db = SL.Data.Database.Open())
+        {
+            db.Execute("update Reservation set [PayStatus]=2 where ReservationID=@p0", id);
+        }
+
+        HtmlUtil.Output(new { success = true });
+        return;
+    }
+    else if ("delete" == Request.QueryString["action"])
+    {
+        int id = req.Int("id", false, "need id");
+
+        if (req.HasError)
+        {
+            HtmlUtil.Output(new { success = false, msg = req.FirstError, errors = req.GetErrors() });
+            return;
+        }
+
+        using (var db = SL.Data.Database.Open())
+        {
+            db.Execute("update Reservation set [Status]=0 where ReservationID=@p0", id);
+        }
+
+        HtmlUtil.Output(new { success = true });
+        return;
+    }
+    else if ("query" == Request.QueryString["action"])
+    {
+        string keywords = req.String("keywords");
+        int page = req.Int("page", defaultValue: 1);
+        int pageSize = req.Int("pageSize", defaultValue: 10);
+
+        string where = "1=1";
+        List<object> parameters = new List<object>();
+
+        if (!string.IsNullOrEmpty(keywords))
+        {
+            where += " and (LessonName like '%'+@p" + parameters.Count + "+'%' or TeacherName like '%'+@p" + parameters.Count + "+'%' or Mobile=@p" + parameters.Count + " or Code=@p" + parameters.Count + ")";
+            parameters.Add(keywords);
+        }
+
+        int total;
+        var data = SQL.QueryPage("ReservationID",
+            "ReservationID,a.ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time,d.Price,UserName,Mobile,d.[Status],d.PayStatus,Code",
+            "Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID join Reservation d on a.ScheduleID=d.ScheduleID join Users e on e.UserID=d.UserID",
+            where,
+            page,
+            pageSize,
+            parameters,
+            out total);
+
+        HtmlUtil.Output(new { success = true, data = data, total = total });
+        return;
+    }
+
+    ViewBag.Title = "预约管理";
+    Layout = "~/Views/Shared/_ManageLayout.cshtml";
+}
+<h1>预约管理</h1>
+<div id="toolbar" class="toolbar"></div>
+<div id="grid"></div>
+<script>
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
+
+        var buttons=new Buttons("#toolbar",[{
+            text: "确认付款",
+            ico: "modify",
+            disabled: true,
+            click: function () {
+                var data=grid.selectedRow().data;
+                if(!window.confirm('确认执行该操作？')) return;
+                var data=grid.selectedRow().data;
+
+                $.ajax({
+                    url: '?action=modify',
+                    type: 'post',
+                    data: {
+                        id: data.ReservationID
+                    },
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.success) {
+                            alert('确认付款成功！');
+                            grid.search();
+                        } else
+                            alert(res.msg);
+                    }
+                });
+            }
+        },{
+            text: "取消",
+            ico: "delete",
+            disabled: true,
+            click: function () {
+                if(!window.confirm('确认取消？')) return;
+                var data=grid.selectedRow().data;
+
+                $.ajax({
+                    url: '?action=delete',
+                    type: 'post',
+                    data: {
+                        id: data.ReservationID
+                    },
+                    dataType: 'json',
+                    success: function (res) {
+                        if(res.success) {
+                            alert('取消成功！');
+                            grid.search();
+                        } else
+                            alert(res.msg);
+                    }
+                });
+            }
+        }]);
+
+        var grid=$('#grid').grid({
+            search: {
+                data: {
+                    keywords: {
+                        label: '关键字',
+                        type: 'text'
+                    }
+                },
+                beforeSend: function () {
+                    buttons.items([0,1]).disable();
+                },
+                url: '?action=query'
+            },
+            onRowSelect: function (row,data) {
+                buttons.items([0,1]).enable();
+            },
+            columns: [{
+                text: '编号',
+                bind: 'ReservationID',
+                width: 6
+            },{
+                text: '预约编码',
+                bind: 'Code',
+                width: 10
+            },{
+                text: '课程名',
+                bind: 'LessonName',
+                width: 10
+            },{
+                text: '授课老师',
+                bind: 'TeacherName',
+                width: 10
+            },{
+                text: '价格',
+                bind: 'Price',
+                width: 10
+            },{
+                text: '日期',
+                bind: 'DateStr',
+                width: 10
+            },{
+                text: '时间',
+                bind: 'Time',
+                width: 10
+            },{
+                text: '状态',
+                bind: 'Status',
+                width: 10,
+                render: function (cell,data) {
+                    cell.append(data.Status==0?"已取消":data.PayStatus==0?"未付款":data.PayStatus==1?"已付款未确认":data.PayStatus==2?"已确认付款":"未知"+data.PayStatus);
+                }
+            }]
+        }).search();
+
+    });
+</script>

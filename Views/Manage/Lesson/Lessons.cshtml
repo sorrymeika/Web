@@ -117,7 +117,7 @@
 <div id="toolbar" class="toolbar"></div>
 <div id="grid"></div>
 <script>
-    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function($,Buttons,popup) {
+    seajs.use(['jquery','lib/buttons','lib/popup','lib/grid','lib/global.css'],function ($,Buttons,popup) {
 
         //添加
         var addingDialog=new popup.Form({
@@ -126,6 +126,17 @@
             width: 600,
             height: 300,
             controls: {
+                lessonType: {
+                    label: '课程类型',
+                    type: 'select',
+                    options: [{
+                        text: '普通课程',
+                        value: 1
+                    },{
+                        text: '测试课程',
+                        value: 0
+                    }]
+                },
                 lessonName: {
                     label: '课程名称',
                     type: 'text',
@@ -166,24 +177,24 @@
             },
             buttons: [{
                 text: '添加',
-                click: function() {
+                click: function () {
                     addingDialog.submit({
-                        beforeSend: function() {
+                        beforeSend: function () {
                         },
-                        success: function(res) {
+                        success: function (res) {
                             if(res.success) {
                                 addingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
                         },
-                        error: function() {
+                        error: function () {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function() {
+                click: function () {
                     addingDialog.hide();
                 }
             }]
@@ -239,24 +250,24 @@
             },
             buttons: [{
                 text: '修改',
-                click: function() {
+                click: function () {
                     modifyingDialog.submit({
-                        beforeSend: function() {
+                        beforeSend: function () {
                         },
-                        success: function(res) {
+                        success: function (res) {
                             if(res.success) {
                                 modifyingDialog.hide().reset();
                                 grid.search();
                             } else
                                 alert(res.msg);
                         },
-                        error: function() {
+                        error: function () {
                         }
                     });
                 }
             },{
                 text: '取消',
-                click: function() {
+                click: function () {
                     modifyingDialog.hide();
                 }
             }]
@@ -265,14 +276,14 @@
         var buttons=new Buttons("#toolbar",[{
             text: "添加",
             ico: 'add',
-            click: function() {
+            click: function () {
                 addingDialog.show();
             }
         },{
             text: "修改",
             ico: "modify",
             disabled: true,
-            click: function() {
+            click: function () {
                 var data=grid.selectedRow().data;
                 modifyingDialog.control("id").val(data.LessonID);
                 modifyingDialog.control("lessonName").val(data.LessonName);
@@ -286,7 +297,7 @@
             text: "删除",
             ico: "delete",
             disabled: true,
-            click: function() {
+            click: function () {
                 if(!window.confirm('确认删除？')) return;
                 var data=grid.selectedRow().data;
 
@@ -294,10 +305,10 @@
                     url: '?action=delete',
                     type: 'post',
                     data: {
-                        id: data.LessionID
+                        id: data.LessonID
                     },
                     dataType: 'json',
-                    success: function(res) {
+                    success: function (res) {
                         if(res.success) {
                             alert('删除成功！');
                             grid.search();
@@ -316,12 +327,12 @@
                         type: 'text'
                     }
                 },
-                beforeSend: function() {
+                beforeSend: function () {
                     buttons.items([1,2]).disable();
                 },
                 url: '?action=query'
             },
-            onRowSelect: function(row,data) {
+            onRowSelect: function (row,data) {
                 buttons.items([1,2]).enable();
             },
             columns: [{

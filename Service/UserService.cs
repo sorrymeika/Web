@@ -59,7 +59,7 @@ namespace SL.Web.Service
 
         public static int GetUserID()
         {
-            return IsLogin() ? (int)GetUser()["UserID"] : 0;
+            return IsLogin() ? (int)GetUser().UserID : 0;
         }
 
         public static int GetAccountID(string account)

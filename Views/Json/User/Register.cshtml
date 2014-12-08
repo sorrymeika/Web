@@ -15,7 +15,7 @@
 
     if (SQL.Exists("select 1 from Users where Mobile=@p0 or Email=@p1", mobile, email))
     {
-        Json.Write(new { success = true, msg = "该手机或电子邮箱已注册" }, Output);
+        Json.Write(new { success = false, msg = "该手机或电子邮箱已注册" }, Output);
         return;
     }
     else

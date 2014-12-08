@@ -96,6 +96,7 @@
     <Content Include="js\DD_belatedPNG_0.0.8a-min.js" />
     <Content Include="js\extentions\area.js" />
     <Content Include="js\extentions\qty.js" />
+    <Content Include="js\lib\underscore.js" />
     <Content Include="js\manage\settings.js" />
     <Content Include="js\site\user.js" />
     <Content Include="js\slider.js" />
@@ -345,6 +346,8 @@
     <Content Include="theme\images\2.jpg" />
     <Content Include="theme\images\3.jpg" />
     <Content Include="theme\images\4.jpg" />
+    <Content Include="theme\images\alipay.png" />
+    <Content Include="theme\images\contact_us.jpg" />
     <Content Include="theme\images\ico_loading.gif" />
     <Content Include="theme\images\lessons.jpg" />
     <Content Include="theme\images\logo.png" />
@@ -352,6 +355,7 @@
     <Content Include="theme\images\schedule_bg.png" />
     <Content Include="theme\images\site.png" />
     <Content Include="theme\images\teachers.jpg" />
+    <Content Include="theme\images\usercenter.jpg" />
     <Content Include="theme\style.css" />
     <Content Include="upload\test.jpg" />
     <Content Include="Web.config">
@@ -506,6 +510,22 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Lesson\Teachers.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Json\Lesson\GetSchedule.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Json\User\CheckReservation.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Json\User\MakeReservation.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Manage\Lesson\Reservation.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\User\Schedule.cshtml" />
+    <Content Include="Views\User\UserCenter.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

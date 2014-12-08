@@ -1,0 +1,25 @@
+﻿@using SL.Util
+@{
+    var isLogin = SL.Web.Service.UserService.IsLogin();
+
+    if (!isLogin)
+    {
+        Json.Write(new { success = false, isLogin = false }, Output);
+        return;
+    }
+
+    var req = new SL.Util.RequestUtil();
+
+    int count = SL.Data.SQL.QueryValue<int>("select count(1) from Reservation where [Status]=1 and ScheduleID=@p0", req.Int("scheduleid"));
+
+    if (count >= 4)
+    {
+        Json.Write(new { success = false, isLogin = true }, Output);
+        return;
+    }
+    else
+    {
+        Json.Write(new { success = true, isLogin = true }, Output);
+        return;
+    }
+}

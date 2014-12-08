@@ -1,0 +1,5 @@
+﻿@using SL.Util
+@{
+    Json.Write(new { success = true, isLogin = SL.Web.Service.UserService.IsLogin() }, Output);
+    return;
+}

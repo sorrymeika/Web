@@ -41,7 +41,10 @@
         </dl>
     </div>
     <div class="news_content"><h1 class="title">@(new MvcHtmlString(data.Title))</h1>
-        <div class="date">@(data.PublishTime.ToString("yyyy-MM-dd"))</div>
+        @if (parentId == 4)
+        {
+            <div class="date">@(data.PublishTime.ToString("yyyy-MM-dd"))</div>
+        }
         <div class="article">
             @(new MvcHtmlString(data.Content))
         </div>

@@ -14,6 +14,7 @@
         parameters.Add(keywords);
     }
 
+    dynamic newsData = null;
     dynamic data;
     dynamic category;
     int parentId;
@@ -61,6 +62,12 @@
                     a.Cover = SL.Util.RequestFile.FullUrl(a.Cover);
                     return true;
                 });
+
+                if (news.Count == 1)
+                {
+                    newsData = news.FirstOrDefault();
+                    newsData.Content = db.QueryValue<String>("select Content from News where NewsID=@p0", newsData.NewsID);
+                }
             }
         }
     }
@@ -74,6 +81,16 @@
     ViewBag.Title = data.CategoryName;
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
+<script>
+    if(location.hash=="#article") {
+        setTimeout(function() {
+            window.scroll(0,542);
+        },200);
+        window.onload=function() {
+            window.scroll(0,542);
+        }
+    }
+</script>
 <div class="headerwrap">
     <div style="width:100%;background: url(@Url.Content("~/Theme/Images/" + parentId + ".jpg")) no-repeat center center;height:542px; position:absolute; "></div>
     @Html.Partial("_Header", "news" + parentId)
@@ -86,14 +103,25 @@
             {
                 foreach (var item in list)
                 { 
-                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="@(Url.Content("~/NewsList"))/@(item.CategoryID).html">@(item.CategoryName)</a></dd>
+                <dd class="@(category != null && category.CategoryID == item.CategoryID ? "curr" : "")"><a href="@(Url.Content("~/NewsList"))/@(item.CategoryID).html#article">@(item.CategoryName)</a></dd>
                 }
             }
         </dl>
     </div>
+    <a name="article"></a>
     <div class="news_content">
         @if (news != null)
         {
+            if (newsData != null)
+            {
+            <h1 class="title">@(new MvcHtmlString(newsData.Title))</h1>
+            <div class="date">@(newsData.PublishTime.ToString("yyyy-MM-dd"))</div>
+            <div class="article">
+                @(new MvcHtmlString(newsData.Content))
+            </div>
+            }
+            else
+            {
             <ul>
                 @foreach (var item in news)
                 { 
@@ -103,6 +131,7 @@
                     </li>
                 }
             </ul>
+            }
         }
         else
         { 

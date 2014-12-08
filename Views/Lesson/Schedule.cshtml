@@ -3,6 +3,7 @@
     int type = req.Int("type");
     int teacherid = req.Int("teacherid");
     int lessonid = req.Int("lessonid");
+    int lessontype = req.Int("lessontype", defaultValue: 1);
 
     IList<dynamic> lessons;
     IList<dynamic> teachers;
@@ -26,9 +27,9 @@
 
     using (SL.Data.Database db = SL.Data.Database.Open())
     {
-        schedules = db.Query("select ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID where DateStr in (" + String.Join(",", dates) + ")");
+        schedules = db.Query("select ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time,b.Price,b.TotalPrice from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID where b.Type=@p0 and DateStr in (" + String.Join(",", dates) + ")", lessontype);
 
-        lessons = db.Query("select LessonID,LessonName from Lesson order by Sort desc");
+        lessons = db.Query("select LessonID,LessonName from Lesson where Type=@p0 order by Sort desc", lessontype);
         teachers = db.Query("select TeacherID,TeacherName from Teacher order by Sort desc");
     }
 
@@ -42,11 +43,19 @@
 <div class="main schedule">
     <div class="schedule_list">
         <div class="schedule_hd clearfix">
-            <div class="hd">课程查询></div>
+            <div class="hd">@(lessontype == 1 ? "课程查询" : "预约测试")></div>
             <div class="schedule_select"><span>请选择课程：</span><select class="js_lessons"></select><span>请选择教师：</span><select class="js_teachers"></select></div>
         </div>
-        <div class="schedule_notice">您查看的课程需要先测试才能预约，现在就预约测试吗？<br>
-            <a class="js_testing">点击预约测试>></a></div>
+        <div class="schedule_notice">
+            @if (lessontype == 1)
+            {
+                <a class="js_testing" href="javascript:;">点击预约测试>></a>
+            }
+            else
+            {
+                <text>请选择您想预约的时间段</text>
+            }
+        </div>
         <div class="schedule_bd">
             <div class="schedule_info">课程名称：<span class="js_lesson_name"></span>授课教师：<span class="js_teacher_name"></span></div>
             <div class="schedule_table js_schedule_table"></div>
@@ -58,43 +67,40 @@
     var teacherid=@(teacherid);
     var lessonid=@(lessonid);
     var thisWeek=@(new MvcHtmlString(Json.Encode(weeks)));
-    var schedules=@(new MvcHtmlString(Json.Encode(schedules)));
+    var schedules=@(new MvcHtmlString(Json.Encode(schedules)))||[];
     var teachers=@(new MvcHtmlString(Json.Encode(teachers)));
-    var lessons=@(new MvcHtmlString(Json.Encode(lessons)));
+    var lessons=@(new MvcHtmlString(Json.Encode(lessons)))||[];
 </script>
 <script>
-    seajs.use(['jquery','site/user'],function ($,user) {
+    seajs.use(['jquery','lib/util','site/user','lib/popup'],function ($,_,user,popup) {
 
-        $.each(teachers,function (i,item) {
-            item.schedules=[];
-            item.lessons=[];
-
-            $.each(schedules,function (j,schedule) {
-                if(schedule.TeacherID==item.TeacherID) {
-                    item.schedules.push(schedule);
-                }
-            });
+        $('.js_teachers').on('change',function () {
+            loadSchedule(this.value,0);
         });
 
-        var columns=[{
-            text: '&nbsp;',
-            bind: "time"
-        }],
-        data=[{
-            time: "8:00--9:30"
-        },{
-            time: "10:00--11:30"
-        },{
-            time: "13:00--14:30"
-        },{
-            time: "15:00--16:30"
-        },{
-            time: "17:00--18:30"
-        }];
+        $('.js_lessons').on('change',function () {
+            loadSchedule(0,this.value);
+        });
 
         function loadSchedule(teacherid,lessonid) {
             $('.js_teachers')[0].length=0;
             $('.js_lessons')[0].length=0;
+
+            var columns=[{
+                text: '&nbsp;',
+                bind: "time"
+            }],
+            data=[{
+                time: "8:00--9:30"
+            },{
+                time: "10:00--11:30"
+            },{
+                time: "13:00--14:30"
+            },{
+                time: "15:00--16:30"
+            },{
+                time: "17:00--18:30"
+            }];
 
             if(teacherid!=0) {
                 var lessonids=[];
@@ -103,7 +109,6 @@
 
                     $.each(schedules,function (j,schedule) {
                         if(schedule.TeacherID==item.TeacherID) {
-                            console.log(item.TeacherID)
                             if($.inArray(schedule.LessonID,lessonids)== -1) {
                                 lessonids.push(schedule.LessonID);
                             }
@@ -172,7 +177,7 @@
                         $.each(schedules,function (ii,schedule) {
                             if(item[1]==schedule.DateStr&&dataItem.time==schedule.Time&&teacherid==schedule.TeacherID&&lessonid==schedule.LessonID) {
                                 str+=schedule.LessonName+"<br>"
-                                scheduleid=schedule.LessonID;
+                                scheduleid=schedule.ScheduleID;
                             }
                         });
                     }
@@ -216,7 +221,11 @@
             $target.addClass('current');
         });
 
-        user.loading('.js_reserve',function () {
+        $('.js_testing').click(function () {
+            location.href="?lessontype=0&teacherid="+teacherid
+        });
+
+        _.syncButton('.js_reserve',function () {
             var $btn=this,
                 el=$('.js_schedule_table').find('i.current');
             if(el.length==0) {
@@ -228,16 +237,103 @@
                 return false;
             }
             return {
-                url: '/json/user/islogin',
+                url: '/json/user/checkReservation',
+                data: {
+                    scheduleid: el.data('scheduleid')
+                },
                 success: function (res) {
                     if(!res.isLogin) {
                         user.showLogin();
+                    } else if(res.success) {
+
+                        var scheduleid=el.data('scheduleid');
+                        !payDialog&&(payDialog=createPayDialog());
+
+                        var item=_.find(schedules,function (item) {
+                            return item.ScheduleID==scheduleid;
+                        });
+
+                        if(item) {
+                            var $cont=payDialog.container;
+                            $cont.find('.js_schedule_id').val(item.ScheduleID);
+                            $cont.find('.js_teacher_id').val(item.TeacherID);
+                            $cont.find('.js_lesson_id').val(item.LessonID);
+                            $cont.find('.js_lesson_name').html(item.LessonName);
+                            $cont.find('.js_teacher_name').html(item.TeacherName);
+                            $cont.find('.js_price').html(item.Price);
+                            $cont.find('.js_total_price').html(item.TotalPrice);
+                            payDialog.show();
+                        }
+
                     } else {
-                        alert("请稍候...");
+                        alert("该时段课程人数已满，您可以预约下一场");
                     }
                 }
             }
         });
+
+        var payDialog;
+
+        function createPayDialog(scheduleid) {
+            var dialog=new popup.Dialog({
+                title: '',
+                drag: false,
+                width: 469,
+                height: 500,
+                content: ['<div class="d_pay js_pay_con"><div class="hd">确认课程信息</div><div class="bd">',
+                    '<input class="js_lesson_id" type="hidden" />',
+                    '<input class="js_teacher_id" type="hidden" />',
+                    '<input class="js_schedule_id" type="hidden" />',
+                    '<dl>',
+                        '<dt>课程信息</dt>',
+                        '<dd>课程名称：<span class="js_lesson_name"></span></dd>',
+                        '<dd>授课教师：<span class="js_teacher_name"></span></dd>',
+                        '<dd><input type="radio" value="0" name="buyType" checked />单门课程 <span class="js_price"></span></dd>',
+                        '<dd><input type="radio" value="1" name="buyType" />全部课程 <span class="js_total_price"></span></dd>',
+                    '</dl>',
+                    '<dl>',
+                        '<dt>支付方式</dt>',
+                        '<dd style="display:none"><input type="radio" value="0" name="payType"  /> 支付平台：<img style="vertical-align:middle" src="/theme/images/alipay.png" /></dd>',
+                        '<dd><input type="radio" value="1" name="payType" checked /> 转账：</dd>',
+                    '</dl>',
+                    '<div class="action"><input class="btn js_pay" type="button" value="确认付款" /></div>',
+                '</div>'].join('')
+            });
+
+            var $cont=dialog.container.addClass('pay_dialog');
+
+            _.syncButton('.js_pay',function () {
+
+                return {
+                    url: '/json/user/makeReservation',
+                    data: {
+                        scheduleid: $cont.find('.js_schedule_id').val(),
+                        teacherid: $cont.find('.js_teacher_id').val(),
+                        lessonid: $cont.find('.js_lesson_id').val(),
+                        buyType: $cont.find('[name="buyType"]:checked').val(),
+                        payType: $cont.find('[name="payType"]:checked').val()
+                    },
+                    success: function (res) {
+                        if(!res.isLogin) {
+                            user.showLogin();
+                        } else if(res.success) {
+                            if(res.price==0) {
+                                dialog.hide();
+
+                                alert("恭喜您，预约成功！");
+
+                            } else {
+                                location.href="/AlipayDirect/Pay/"+res.reservationid;
+                            }
+                        } else {
+                            alert(res.msg);
+                        }
+                    }
+                }
+            });
+
+            return dialog;
+        };
 
     });
 </script>

@@ -71,7 +71,6 @@ TestingStatus int
 
 
 --2014-12-04
---未发邮件更新
 alter table Lesson add Price decimal(18,2)
 alter table Lesson add TotalPrice decimal(18,2)
 
@@ -93,3 +92,21 @@ Sort int,
 Price decimal(18,2),
 TotalPrice decimal(18,2)
 )
+
+truncate table Users
+select * from Users
+
+--2014-12-07
+--服务器未同步
+
+--课程类型 0:测试课程 1:普通课程
+alter table Lesson add [Type] int
+update Lesson set [Type]=1
+
+alter table Reservation add Code varchar(32)
+alter table Reservation add BuyType int
+alter table Reservation add PayType int
+alter table Reservation add Price decimal(18,2)
+alter table Reservation add [Status] int
+
+

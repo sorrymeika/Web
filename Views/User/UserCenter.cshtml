@@ -1,0 +1,37 @@
+﻿@{
+    var userinfo = SL.Web.Service.UserService.GetUser();
+
+    ViewBag.Title = "个人中心";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script>
+    var isLogin=@(SL.Web.Service.UserService.IsLogin() ? "true" : "false");
+</script>
+<div class="headerwrap">
+    <div style="width:100%;background: url(@Url.Content("~/Theme/Images/usercenter.jpg")) no-repeat center center;height:542px; position:absolute; "></div>
+    @Html.Partial("_Header", "lessons")
+</div>
+<div class="main newswrap clearfix">
+    <div class="new_sidebar">
+        <dl>
+            <dt>个人中心</dt>
+            <dd class="curr">基本信息</dd>
+            <dd><a href="/user/schedule">预约课程</a></dd>
+        </dl>
+    </div>
+    <div class="news_content">
+        <ul class="userinfo">
+            <li>姓名：@userinfo.UserName</li>
+            <li>手机：@userinfo.Mobile</li>
+            <li>邮箱：@userinfo.Email</li>
+        </ul>
+    </div>
+</div>
+<script>
+    seajs.use(['jquery','site/user'],function($,user) {
+        if(!isLogin) {
+            user.showLogin();
+            return;
+        }
+    });
+</script>

@@ -1,5 +1,6 @@
-﻿define(function(require,exports,module) {
+﻿define(function (require,exports,module) {
     var $=require('jquery'),
+        _=require('./underscore'),
         _guid=0,
         doc=document,
         ArrayProto=Array.prototype,
@@ -13,89 +14,26 @@
     var util={
         isIE: /MSIE/.test(ua),
         isIE6: /MSIE 6/.test(ua),
-        guid: function() {
+        guid: function () {
             return ++_guid;
         },
-        pick: function(obj,iteratee) {
-            var result={},key;
-            if(obj==null) return result;
-            if(typeof iteratee==='function') {
-                for(key in obj) {
-                    var value=obj[key];
-                    if(iteratee(value,key,obj)) result[key]=value;
-                }
-            } else {
-                var keys=concat.apply([],slice.call(arguments,1));
-                for(var i=0,length=keys.length;i<length;i++) {
-                    key=keys[i];
-                    if(key in obj) result[key]=obj[key];
-                }
-            }
-            return result;
-        },
-        template: function(str,data) {
-            var tmpl='var __p=[];'+'with(obj||{}){__p.push(\''+
-                str.replace(/\\/g,'\\\\')
-                .replace(/'/g,'\\\'')
-                .replace(/<%=([\s\S]+?)%>/g,function(match,code) {
-                    return '\','+code.replace(/\\'/,'\'')+',\'';
-                })
-                .replace(/<%([\s\S]+?)%>/g,function(match,code) {
-                    return '\');'+code.replace(/\\'/,'\'')
-                            .replace(/[\r\n\t]/g,' ')+'__p.push(\'';
-                })
-                .replace(/\r/g,'\\r')
-                .replace(/\n/g,'\\n')
-                .replace(/\t/g,'\\t')+
-                '\');}return __p.join("");',
-
-                func=new Function('obj',tmpl);
-
-            return data?func(data):func;
-        },
-        format: function(t,obj) {
-            return t.replace(/\{([^}]+)\}/g,function(g0,key) {
+        format: function (t,obj) {
+            return t.replace(/\{([^}]+)\}/g,function (g0,key) {
                 var $data=obj[key];
                 return $data;
             });
         },
-        htmlEncode: function(text) {
-            return (""+text).split("<").join("&lt;").split(">").join("&gt;").split('"').join("&#34;").split("'").join("&#39;");
-        },
-        bind: function() {
-            var slice=Array.prototype.slice,
-                args=slice.call(arguments),
-                fn=args.shift(),
-                object=args.shift();
-            return function() {
-                return fn.apply(object,args.concat(slice.call(arguments)));
-            }
-        },
-        pad: function(num,n) {
+        pad: function (num,n) {
             var a='0000000000000000'+num;
             return a.substr(a.length-(n||2));
         },
-        sum: function(arr,f) {
+        sum: function (arr,f) {
             var res=0;
             if(f) for(var i=0,n=arr.length;i<n;i++) res+=f(i,arr[i],n);
             else for(var i=0,n=arr.length;i<n;i++) res+=arr[i];
             return res;
         },
-        indexOf: function(arr,f) {
-            var index=0;
-            if($.isFunction(f)) {
-                for(var i=0,item,n=arr.length;i<n;i++) {
-                    item=arr[i];
-                    if(f.call(item,i,item,n)) return i;
-                }
-            } else {
-                for(var i=0,n=arr.length;i<n;i++) {
-                    if(f==arr[i]) return i;
-                }
-            }
-            return res;
-        },
-        formatDate: function(d,f) {
+        formatDate: function (d,f) {
             if(typeof d=="string"&&/^\/Date\(\d+\)\/$/.test(d)) {
                 d=new Function("return new "+d.replace(/\//g,''))();
             }
@@ -113,11 +51,11 @@
                 .replace(/m/,m)
                 .replace(/s{2,}/,pad(s))
                 .replace(/s/,s)
-                .replace(/f+/,function(w) {
+                .replace(/f+/,function (w) {
                     return mill.substr(0,w.length)
                 })
         },
-        addStyle: function(css) {
+        addStyle: function (css) {
             var style=doc.createElement("style");
             style.type="text/css";
             try {
@@ -128,13 +66,13 @@
             var head=doc.getElementsByTagName("head")[0];
             head.appendChild(style);
         },
-        submit: function(form,url,fn) {
+        submit: function (form,url,fn) {
             var me=$(form),
-                blankFn=function() { };
+                blankFn=function () { };
 
             var settings=url&&typeof url==="object"?$.extend({
                 url: me.attr('action'),
-                validate: function() {
+                validate: function () {
                     return true;
                 },
                 beforeSend: blankFn,
@@ -152,7 +90,7 @@
                 if(me.has('[type="file"]').length>0) {
                     me.attr('action',settings.url);
 
-                    util.submitForm(me,function(data) {
+                    util.submitForm(me,function (data) {
                         settings.success&&settings.success.call(me,data)
                     });
                 } else {
@@ -161,17 +99,17 @@
                         type: 'POST',
                         dataType: 'json',
                         data: me.serialize(),
-                        success: function(data) {
+                        success: function (data) {
                             settings.success&&settings.success.call(me,data)
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             settings.error&&settings.error.call(me,xhr);
                         }
                     });
                 }
             }
         },
-        submitForm: function(form,callback) {
+        submitForm: function (form,callback) {
             var $form=$(form),
                 $callback=$form.find('[name="callback"]'),
                 guid=this.guid(),
@@ -179,7 +117,7 @@
                 eventName="_submitForm_"+guid,
                 $iframe=$('<iframe style="top:-999px;left:-999px;position:absolute;display:none;" frameborder="0" width="0" height="0" name="'+target+'"></iframe>');
 
-            window[eventName]=function(data) {
+            window[eventName]=function (data) {
                 callback.call($form,data);
                 $iframe.remove();
                 delete window[eventName];
@@ -193,11 +131,47 @@
             $form.attr("target",target)
                 .submit();
         },
-        queryString: function(name) {
+
+        syncButton: function ($btn,fn) {
+            !($btn instanceof $)&&($btn=$($btn));
+
+            $btn.click(function (e) {
+                var $btn=$(e.currentTarget);
+                if(!$btn.hasClass('disabled')) {
+
+                    var val=$btn[0].tagName=="INPUT"?"val":'html',
+                        data=fn.call($btn);
+
+                    if(!data) return;
+
+                    $btn.data('val',$btn[val]())
+                    $btn.addClass('disabled')[val](($btn[0].tagName=="INPUT"?'':'<i></i>')+"请稍候...");
+
+                    $.ajax({
+                        url: data.url,
+                        type: 'POST',
+                        dataType: 'json',
+                        data: data.data,
+                        success: function (res) {
+                            data.success&&data.success.call($btn,res);
+                        },
+                        error: (data.error||function (res) {
+                            alert((res&&res.msg)||"网络错误");
+                        }),
+
+                        complete: function () {
+                            $btn.removeClass('disabled')[val]($btn.data('val'));
+                        }
+                    });
+                }
+            });
+        },
+
+        queryString: function (name) {
             var result=location.search.match(new RegExp("[\?\&]"+name+"=([^\&]+)","i"));
             return (result==null||result.length<1)?null:result[1];
         },
-        offsetParent: function(el) {
+        offsetParent: function (el) {
             var parent=el.parent(),
                 position;
             while(parent.length!=0&&parent[0].tagName.toLowerCase()!="body") {
@@ -207,7 +181,7 @@
             }
             return parent;
         },
-        cookie: function(a,b,c,p) {
+        cookie: function (a,b,c,p) {
             if(typeof b==='undefined') {
                 var res=document.cookie.match(new RegExp("(^| )"+a+"=([^;]*)(;|$)"));
                 if(res!=null)
@@ -227,7 +201,7 @@
                 document.cookie=a+"="+escape(b)+(c||"")+";path="+(p||'/')
             }
         },
-        store: function(key,value) {
+        store: function (key,value) {
             if(typeof value==='undefined')
                 return JSON.parse(this.cookie(key));
             if(value===null)
@@ -237,5 +211,7 @@
         }
     };
 
-    module.exports=util;
+    _.extend(_,util);
+
+    module.exports=_;
 });

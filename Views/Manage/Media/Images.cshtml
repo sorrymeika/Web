@@ -63,7 +63,7 @@
                 var data=grid.selectedRow().data;
 
                 $.ajax({
-                    url: '?action=delete',
+                    url: '?action=delete&name='+_.queryString('name'),
                     type: 'post',
                     data: {
                         id: data.ID

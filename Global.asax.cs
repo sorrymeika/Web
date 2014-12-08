@@ -81,6 +81,21 @@ namespace SL.Web
             );
             #endregion
 
+            #region 支付宝
+            routes.MapRoute(
+                "AlipayDirectPay",
+                "AlipayDirect/Pay/{orderid}",
+                new { controller = "AlipayDirect", action = "Pay", orderid = 0 },
+                new { orderid = "^\\d+$" }
+            );
+
+            routes.MapRoute(
+                "AlipayDirect",
+                "AlipayDirect/{action}",
+                new { controller = "AlipayDirect", action = "Callback" }
+            );
+            #endregion
+
             routes.MapRoute(
                 "Default",
                 "{catalog}/{handle}",

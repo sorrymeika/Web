@@ -28,8 +28,8 @@
                   <source src="@item.Video" type='video/mp4'>
                 </video>
                 <img src="@item.Cover" style="display:none" /> </div>
-            <div class="info"><p class="name">@(new MvcHtmlString(item.Title))</p>
-                <p class="con">@(new MvcHtmlString(item.Description))</p>
+            <div class="info"><p class="name">@(new MvcHtmlString(item.TeacherName))</p>
+                <p class="con">@(new MvcHtmlString(item.Description.Replace("\r\n", "<br>").Replace("\n", "<br>").Replace("\r", "<br>")))</p>
                 <p class="action"><input class="btn js_start" data-id="@item.TeacherID" type="button" value="立即预约"></p>
             </div>
         </div>
@@ -45,8 +45,9 @@
                 @foreach (var item in data)
                 {
                     <li data-id="@item.TeacherID" data-src="@item.Cover" data-video="@item.Video"><p class="img"><img src="@item.Cover" /></p>
-                        <p class="name">@(new MvcHtmlString(item.Title))</p>
-                        <p class="con">@(new MvcHtmlString(item.Description))</p>
+                        <p class="name">@(new MvcHtmlString(item.TeacherName))</p>
+                        <p class="con">@(new MvcHtmlString(item.Description.Length > 72 ? item.Description.Substring(0, 69) + "..." : item.Description))</p>
+                        <input type="hidden" value="@item.Description.Replace("\r\n", "<br>").Replace("\n", "<br>").Replace("\r", "<br>")" />
                     </li>
                 }
             </ul>
@@ -103,7 +104,7 @@
                 $info.data('id',id);
                 $info.find('img').attr('src',$target.data('src'));
                 $info.find('.name').html($target.find('.name').html());
-                $info.find('.con').html($target.find('.con').html());
+                $info.find('.con').html($target.find('input').val());
             }
 
         });

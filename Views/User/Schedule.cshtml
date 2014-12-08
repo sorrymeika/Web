@@ -1,0 +1,273 @@
+﻿@{
+    SL.Util.RequestUtil req = new SL.Util.RequestUtil();
+    int type = req.Int("type");
+    int teacherid = req.Int("teacherid");
+    int lessonid = req.Int("lessonid");
+    int lessontype = req.Int("lessontype", defaultValue: 1);
+
+    IList<dynamic> lessons;
+    IList<dynamic> teachers;
+    IList<dynamic> schedules;
+
+    var weeks = new String[] { "周一", "周二", "周三", "周四", "周五", "周六", "周日" };
+    List<string> dates = new List<string>();
+    var thisWeek = (int)DateTime.Today.DayOfWeek;
+
+    if (type == 1)
+    {
+        thisWeek -= 7;
+    }
+
+    for (var i = 0; i < 7; i++)
+    {
+        var day = DateTime.Today.AddDays(i - thisWeek + 1);
+        weeks[i] = day.ToString("MM-dd") + weeks[i] + "|" + day.ToString("yyyy-MM-dd");
+        dates.Add("'" + day.ToString("yyyy-MM-dd") + "'");
+    }
+
+    using (SL.Data.Database db = SL.Data.Database.Open())
+    {
+        schedules = db.Query("select ReservationID,a.ScheduleID,a.LessonID,b.LessonName,a.TeacherID,TeacherName,DateStr,Date,DateDisplay,Time,d.Price,UserName,Mobile,d.[Status],d.PayStatus,Code from Schedule a join Lesson b on a.LessonID=b.LessonID join Teacher c on a.TeacherID=c.TeacherID join Reservation d on a.ScheduleID=d.ScheduleID join Users e on e.UserID=d.UserID where e.UserID=@p1 and b.Type=@p0 and DateStr in (" + String.Join(",", dates) + ")", lessontype, SL.Web.Service.UserService.GetUserID());
+
+        lessons = db.Query("select LessonID,LessonName from Lesson where Type=@p0 order by Sort desc", lessontype);
+        teachers = db.Query("select TeacherID,TeacherName from Teacher order by Sort desc");
+
+        teacherid = teachers != null ? teachers.First().TeacherID : 0;
+    }
+
+    ViewBag.Title = "预约课程";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="headerwrap">
+    <div style="width:100%;background: url(@Url.Content("~/Theme/Images/usercenter.jpg")) no-repeat center center;height:542px; position:absolute; "></div>
+    @Html.Partial("_Header", "lessons")
+</div>
+<div class="main newswrap schedule clearfix">
+    <div class="new_sidebar">
+        <dl>
+            <dt>个人中心</dt>
+            <dd><a href="/user/usercenter">基本信息</a></dd>
+            <dd class="curr">预约课程</dd>
+        </dl>
+    </div>
+    <div class="news_content">
+        <div class="schedule_list">
+            <div class="schedule_hd ">
+                <div class="schedule_select"><span>请选择课程：</span><select class="js_lessons"></select><span>请选择教师：</span><select class="js_teachers"></select></div>
+            </div>
+            <div class="schedule_notice"></div>
+            <div class="schedule_bd">
+                <div class="schedule_info">课程名称：<span class="js_lesson_name"></span>授课教师：<span class="js_teacher_name"></span></div>
+                <div class="schedule_table js_schedule_table"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var isLogin=@(SL.Web.Service.UserService.IsLogin() ? "true" : "false");
+    var teacherid=@(teacherid);
+    var lessonid=@(lessonid);
+    var thisWeek=@(new MvcHtmlString(Json.Encode(weeks)));
+    var schedules=@(new MvcHtmlString(Json.Encode(schedules)))||[];
+    var teachers=@(new MvcHtmlString(Json.Encode(teachers)));
+    var lessons=@(new MvcHtmlString(Json.Encode(lessons)))||[];
+</script>
+<script>
+    seajs.use(['jquery','lib/util','site/user','lib/popup'],function($,_,user,popup) {
+
+        if(!isLogin) {
+            user.showLogin();
+            return;
+        }
+
+        $('.js_teachers').on('change',function() {
+            loadSchedule(this.value,0);
+        });
+
+        $('.js_lessons').on('change',function() {
+            loadSchedule(0,this.value);
+        });
+
+        function loadSchedule(teacherid,lessonid) {
+            $('.js_teachers')[0].length=0;
+            $('.js_lessons')[0].length=0;
+
+            var columns=[{
+                text: '&nbsp;',
+                bind: "time"
+            }],
+            data=[{
+                time: "8:00--9:30"
+            },{
+                time: "10:00--11:30"
+            },{
+                time: "13:00--14:30"
+            },{
+                time: "15:00--16:30"
+            },{
+                time: "17:00--18:30"
+            }];
+
+            if(teacherid!=0) {
+                var lessonids=[];
+                $.each(teachers,function(i,item) {
+                    $('.js_teachers')[0].options.add(new Option(item.TeacherName,item.TeacherID));
+
+                    $.each(schedules,function(j,schedule) {
+                        if(schedule.TeacherID==item.TeacherID) {
+                            if($.inArray(schedule.LessonID,lessonids)== -1) {
+                                lessonids.push(schedule.LessonID);
+                            }
+                        }
+                    });
+                });
+                $.each(lessons,function(i,item) {
+                    if($.inArray(item.LessonID,lessonids)!= -1) {
+                        $('.js_lessons')[0].options.add(new Option(item.LessonName,item.LessonID));
+                    }
+                });
+                lessonid=lessonids.length?lessonids[0]:0;
+            }
+            else if(lessonid!=0) {
+                var teacherids=[];
+                $.each(lessons,function(i,item) {
+                    $('.js_lessons')[0].options.add(new Option(item.LessonName,item.LessonID));
+
+                    $.each(schedules,function(j,schedule) {
+                        if(schedule.LessonID==item.LessonID) {
+                            if($.inArray(schedule.TeacherID,teacherids)== -1) {
+                                teacherids.push(schedule.TeacherID);
+                            }
+                        }
+                    });
+                });
+                $.each(teachers,function(i,item) {
+                    if($.inArray(item.TeacherID,teacherids)!= -1) {
+                        $('.js_teachers')[0].options.add(new Option(item.TeacherName,item.TeacherID));
+                    }
+                });
+                teacherid=teacherids.length?teacherids[0]:0;
+            }
+
+            $('.js_teachers')[0].value=teacherid;
+            $('.js_lessons')[0].value=lessonid;
+
+            $.each(teachers,function(i,item) {
+                if(item.TeacherID==teacherid) {
+                    $('.js_teacher_name').html(item.TeacherName);
+                    return false;
+                }
+            });
+
+            $.each(lessons,function(i,item) {
+                if(item.LessonID==lessonid) {
+                    $('.js_lesson_name').html(item.LessonName);
+                    return false;
+                }
+            });
+
+            $.each(thisWeek,function(i,item) {
+                item=item.split('|');
+                columns.push({
+                    text: item[0],
+                    bind: item[1],
+                    render: function(data) {
+                        return data.data;
+                    }
+                });
+
+                $.each(data,function(j,dataItem) {
+                    var str='',
+                        scheduleid='';
+                    if(schedules) {
+                        $.each(schedules,function(ii,schedule) {
+                            if(item[1]==schedule.DateStr&&dataItem.time==schedule.Time&&teacherid==schedule.TeacherID&&lessonid==schedule.LessonID) {
+                                str+=schedule.LessonName+"<br>"
+                                scheduleid=schedule.ScheduleID;
+                            }
+                        });
+                    }
+
+                    dataItem[item[1]]={
+                        time: dataItem.time,
+                        date: item[1],
+                        dateDisplay: item[0],
+                        data: str,
+                        scheduleid: scheduleid
+                    };
+                });
+            });
+
+            var header=[],
+            html=[];
+
+            $.each(columns,function(i,column) {
+                header.push("<i"+(i==0?' class="first"':'')+">"+column.text+"</i>");
+            });
+
+            $.each(data,function(j,item) {
+                $.each(columns,function(i,column) {
+                    if(i==0) {
+                        html.push('<div class="schedule_row">');
+                    }
+                    var itemData=item[column.bind];
+                    html.push('<i'+(i==0?' class="first"':'')+' data-display="'+itemData.dateDisplay+'" data-date="'+itemData.date+'" data-time="'+itemData.time+'" data-scheduleid="'+itemData.scheduleid+'">'+((column.render?column.render(itemData):itemData)||"&nbsp;")+'</i>')
+                });
+            })
+
+            $('.js_schedule_table').html('<div class="schedule_hds">'+header.join('')+'</div><div class="schedule_bds">'+html.join('')+'</div>');
+        }
+
+        loadSchedule(teacherid,lessonid);
+
+        var infoDialog;
+        $('.js_schedule_table').on('click','i[data-time]:not(.first)',function(e) {
+            var $target=$(e.currentTarget);
+
+            $('.js_schedule_table').find('i').removeClass('current');
+            $target.addClass('current');
+            var scheduleid=$target.data('scheduleid')
+            if(scheduleid) {
+                !infoDialog&&(infoDialog=createDialog());
+
+                var item=_.find(schedules,function(item) {
+                    return item.ScheduleID==scheduleid;
+                });
+
+                if(item) {
+                    var $cont=infoDialog.container;
+                    $cont.find('.js_lesson_name').html(item.LessonName);
+                    $cont.find('.js_time').html(item.Time);
+                    $cont.find('.js_code').html(item.Code);
+                    $cont.find('.js_teacher_name').html(item.TeacherName);
+                    infoDialog.show();
+                }
+
+            }
+        });
+
+        function createDialog() {
+
+            var dialog=new popup.Dialog({
+                title: '',
+                drag: false,
+                width: 469,
+                height: 300,
+                content: ['<div class="d_pay js_pay_con"><div class="hd">预约详情</div><div class="bd">',
+                    '<dl>',
+                        '<dd>您预约的课程：<span class="js_lesson_name"></span></dd>',
+                        '<dd>您预约的时间：<span class="js_time"></span></dd>',
+                        '<dd>授课教师：<span class="js_teacher_name"></span></dd>',
+                        '<dd>您的预约编码：<span class="js_code"></span></dd>',
+                    '</dl>',
+                '</div>'].join('')
+            });
+
+            var $cont=dialog.container.addClass('pay_dialog');
+            return dialog;
+        }
+
+
+
+    });
+</script>

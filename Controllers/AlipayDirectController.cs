@@ -15,10 +15,29 @@ namespace SL.Web.Controllers
 {
     public class AlipayDirectController : Controller
     {
+        public ActionResult Pay(int orderid)
+        {
+            var data = SL.Data.SQL.QuerySingle("select ReservationID,Code,a.Price,[Status],c.LessonName from Reservation a join Schedule b on a.ScheduleID=b.ScheduleID join Lesson c on b.LessonID=c.LessonID where ReservationID=@p0", orderid);
+
+            if (data == null)
+            {
+                return Content("预约不存在");
+            }
+            if (data.Status == 0)
+            {
+                return Content("预约已被取消");
+            }
+
+            var url = "http://" + Request.Url.Authority;
+            return RedirectToAlipay(data.Code, data.LessonName, data.Price,
+                 url + "/alipaydirect/notify",
+                 url + "/alipaydirect/callback",
+                 url, "");
+        }
+
         /// <summary>
         /// 跳转至支付宝支付
         /// </summary>
-        /// <param name="seller_email">卖家支付宝帐户(必填)</param>
         /// <param name="out_trade_no">商户订单号(商户网站订单系统中唯一订单号，必填)</param>
         /// <param name="subject">订单名称(必填)</param>
         /// <param name="total_fee">付款金额(必填)</param>
@@ -27,11 +46,12 @@ namespace SL.Web.Controllers
         /// <param name="show_url">商品展示地址</param>
         /// <param name="body">订单描述</param>
         /// <returns></returns>
-        public ActionResult RedirectToAlipay(string seller_email, string out_trade_no, string subject, string total_fee, string notify_url, string return_url, string show_url, string body)
+        public ActionResult RedirectToAlipay(string out_trade_no, string subject, string total_fee, string notify_url, string return_url, string show_url, string body)
         {
             AlipaySetting setting = AlipaySetting.getInstance();
             Alipay.Direct.Config.Partner = setting.Direct_Partner;
             Alipay.Direct.Config.Key = setting.Direct_Key;
+            string seller_email = setting.Direct_Seller_Email;
 
             ////////////////////////////////////////////请求参数////////////////////////////////////////////
 
@@ -68,7 +88,7 @@ namespace SL.Web.Controllers
             return Content(sHtmlText);
         }
 
-        public ActionResult Callback(int orderid)
+        public ActionResult Callback()
         {
             SortedDictionary<string, string> sPara = GetRequestGet();
 
@@ -127,7 +147,7 @@ namespace SL.Web.Controllers
             }
         }
 
-        public ActionResult Notify(int orderid)
+        public ActionResult Notify()
         {
             SortedDictionary<string, string> sPara = GetRequestPost();
 

@@ -1,44 +1,12 @@
 ﻿define(function (require) {
 
     var $=require('jquery');
+    var _=require('lib/util');
     var popup=require('lib/popup');
     require('lib/jquery.datepicker');
 
     var user={
-        loading: function ($btn,fn) {
-            !($btn instanceof $)&&($btn=$($btn));
-
-            $btn.click(function (e) {
-                var $btn=$(e.currentTarget);
-                if(!$btn.hasClass('disabled')) {
-
-                    var val=$btn[0].tagName=="INPUT"?"val":'html',
-                        data=fn.call($btn);
-
-                    if(!data) return;
-
-                    $btn.data('val',$btn[val]())
-                    $btn.addClass('disabled')[val](($btn[0].tagName=="INPUT"?'':'<i></i>')+"请稍候...");
-
-                    $.ajax({
-                        url: data.url,
-                        type: 'POST',
-                        dataType: 'json',
-                        data: data.data,
-                        success: function (res) {
-                            data.success&&data.success.call($btn,res);
-                        },
-                        error: (data.error||function (res) {
-                            alert((res&&res.msg)||"网络错误");
-                        }),
-
-                        complete: function () {
-                            $btn.removeClass('disabled')[val]($btn.data('val'));
-                        }
-                    });
-                }
-            });
-        }
+        loading: _.syncButton
     };
 
     user.showLogin=function () {
@@ -79,7 +47,7 @@
         return dialog;
     };
 
-    user.loginDialog=user._createLoginDialog()
+    user.loginDialog=user._createLoginDialog();
 
     $('.js_birth').datePicker({
         clickInput: true,
@@ -87,7 +55,7 @@
         startDate: "1960-01-01"
     }).dpSetDisplayedMonth('0','1980');
 
-    user.loading('.js_register',function () {
+    _.syncButton('.js_register',function () {
         var $con=this.closest('.js_register_con');
 
         return {
@@ -109,7 +77,7 @@
         }
     });
 
-    user.loading('.js_login',function () {
+    _.syncButton('.js_login',function () {
         var $con=this.closest('.js_login_con');
 
         return {

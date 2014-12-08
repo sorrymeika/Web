@@ -9,6 +9,7 @@
     if (Request["action"] == "direct")
     {
         string key = req.String("key");
+        string sellerEmail = req.String("sellerEmail");
 
         if (req.HasError)
         {
@@ -18,6 +19,7 @@
 
         setting.Direct_Partner = partner;
         setting.Direct_Key = key;
+        setting.Direct_Seller_Email = sellerEmail;
 
         Json.Write(new { success = true }, Output);
         return;
@@ -56,6 +58,11 @@
                     label: '合作者身份ID',
                     type: 'text',
                     value: '@setting.Direct_Partner'
+                },
+                sellerEmail: {
+                    label: '卖家支付宝帐户',
+                    type: 'text',
+                    value: '@setting.Direct_Seller_Email'
                 },
                 key: {
                     label: '交易安全校验码',

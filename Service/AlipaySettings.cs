@@ -107,5 +107,18 @@ namespace SL.Web.Service
             }
         }
 
+        public string Direct_Seller_Email
+        {
+            get
+            {
+                return _setting.Direct_Seller_Email;
+            }
+            set
+            {
+                _setting.Direct_Seller_Email = value;
+                _settings.Save();
+            }
+        }
+
     }
 }
