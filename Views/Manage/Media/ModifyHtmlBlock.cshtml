@@ -65,7 +65,7 @@ var content=@(new MvcHtmlString(Json.Encode(data.Content)));
                     form.submit(function (res) {
                         if(res.success) {
                             alert('修改成功');
-                            location.href="/manage/media/images?name="+_.queryString('name')
+                            location.href="/manage/media/htmlblocks?name="+_.queryString('name')
                         } else
                             alert(res.msg);
                     });
@@ -73,7 +73,7 @@ var content=@(new MvcHtmlString(Json.Encode(data.Content)));
             },{
                 text: '取消',
                 click: function () {
-                    location.href="/manage/media/images?name="+_.queryString('name')
+                    location.href="/manage/media/htmlblocks?name="+_.queryString('name')
                 }
             }]
         });

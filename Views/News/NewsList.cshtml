@@ -83,10 +83,10 @@
 }
 <script>
     if(location.hash=="#article") {
-        setTimeout(function() {
+        setTimeout(function () {
             window.scroll(0,542);
         },200);
-        window.onload=function() {
+        window.onload=function () {
             window.scroll(0,542);
         }
     }
@@ -115,19 +115,23 @@
             if (newsData != null)
             {
             <h1 class="title">@(new MvcHtmlString(newsData.Title))</h1>
+                          if (parentId == 3)
+                          {             
             <div class="date">@(newsData.PublishTime.ToString("yyyy-MM-dd"))</div>
+                          }
             <div class="article">
                 @(new MvcHtmlString(newsData.Content))
             </div>
             }
             else
             {
-            <ul>
+            <ul class="news_list">
                 @foreach (var item in news)
                 { 
                     <li>
-                        <div class="hd"><a href="@(Url.Content("~/news"))/@(item.NewsID).html">@(new MvcHtmlString(item.Title))</div>
+                        <div class="hd"><a href="@(Url.Content("~/news"))/@(item.NewsID).html">@(new MvcHtmlString(item.Title))</a></div>
                         <div class="con">@(new MvcHtmlString(item.Guide))</div>
+                        <div class="more"><a href="@(Url.Content("~/news"))/@(item.NewsID).html">了解更多>></a></div>
                     </li>
                 }
             </ul>

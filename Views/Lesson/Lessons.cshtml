@@ -1,5 +1,5 @@
 ﻿@{
-    var data = SL.Data.SQL.Query("select LessonID,LessonName,Cover,Description,Sort from Lesson order by Sort desc");
+    var data = SL.Data.SQL.Query("select LessonID,LessonName,Cover,Description,Sort from Lesson where Type=1 order by Sort desc");
     if (data != null)
     {
         data.All(a =>
@@ -17,17 +17,16 @@
     @Html.Partial("_Header", "lessons")
 </div>
 <div class="main">
-    @if (data != null && data.Count != 0)
-    {
-        var item = data.FirstOrDefault();
-        <div class="lesson_info clearfix js_info" data-id="@item.LessonID">
-            <div class="img"><img src="@item.Cover" /> </div>
-            <div class="info"><p class="name">@(new MvcHtmlString(item.LessonName))</p>
-                <p class="con">@(new MvcHtmlString(item.Description.Replace("\r\n", "<br>").Replace("\n", "<br>").Replace("\r", "<br>")))</p>
-                <p class="action"><input class="btn js_start" data-id="@item.LessonID" type="button" value="立即预约"></p>
-            </div>
-        </div>
-    }
+    <div class="lesson_banner" data-setting="htmlblocks" data-name="lesson">
+        @{ var blocks = SL.Web.Service.SettingService.GetHtmlBlocks("lesson"); }
+        @if (blocks != null)
+        {
+            foreach (var item in blocks)
+            {
+            @(new MvcHtmlString(item.Content))
+            }
+        }
+    </div>
     <div class="lesson_list js_list">
         @if (data == null || data.Count == 0)
         {
@@ -49,29 +48,44 @@
     </div>
 </div>
 <script>
-    seajs.use(['jquery','site/user'],function ($,user) {
+    seajs.use(['jquery','site/user','lib/popup'],function ($,user,popup) {
 
-        user.loading('.js_start',function () {
-            var $btn=this;
-
-            return {
-                url: '/json/user/islogin',
-                success: function (res) {
-                    if(!res.isLogin) {
-                        user.showLogin();
-                    } else {
-
-                        location.href="/schedule.html?lessonid="+$btn.data('id');
-                    }
-                }
-            }
-        });
+        var lessonDialog,$info;
 
         $('.js_list').on('click','[data-id]',function (e) {
             var $target=$(e.currentTarget),
                 $info=$('.js_info'),
                 id=$target.data('id');
 
+            !lessonDialog&&(lessonDialog=new popup.Dialog({
+                title: '',
+                drag: false,
+                width: 759,
+                height: 677,
+                content: ['<div class="lesson_info clearfix js_info" data-id="">',
+                        '<div class="img"><img src="" /> </div>',
+                        '<div class="info"><p class="name"></p>',
+                        '<p class="con"></p>',
+                    '</div>',
+                '</div>',
+                '<p class="lesson_info_action"><input class="btn js_start" data-id="item.LessonID" type="button" value="立即预约"></p>'].join('')
+            }),
+            $info=lessonDialog.container.addClass('login_dialog').find('.lesson_info'),
+            user.loading('.js_start',function () {
+                var $btn=this;
+
+                return {
+                    url: '/json/user/islogin',
+                    success: function (res) {
+                        if(!res.isLogin) {
+                            lessonDialog.hide();
+                            user.showLogin();
+                        } else {
+                            location.href="/schedule.html?lessonid="+$btn.data('id');
+                        }
+                    }
+                }
+            }));
 
             if(id!=$info.data('id')) {
                 $('.js_start').data('id',id);
@@ -80,6 +94,8 @@
                 $info.find('.name').html($target.find('.name').html());
                 $info.find('.con').html($target.find('input').val());
             }
+
+            lessonDialog.show();
 
         });
     });

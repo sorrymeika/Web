@@ -20,21 +20,17 @@
     @Html.Partial("_Header", "teachers")
 </div>
 <div class="main">
-    @if (data != null && data.Count != 0)
-    {
-        var item = data.FirstOrDefault();
-        <div class="lesson_info clearfix js_info" data-id="@item.TeacherID" data-video="@item.Video">
-            <div class="img"><video id="really-cool-video" class="video-js vjs-default-skin" controls preload="auto" width="655" height="392" poster="@item.Cover" data-setup='{}'>
-                  <source src="@item.Video" type='video/mp4'>
-                </video>
-                <img src="@item.Cover" style="display:none" /> </div>
-            <div class="info"><p class="name">@(new MvcHtmlString(item.TeacherName))</p>
-                <p class="con">@(new MvcHtmlString(item.Description.Replace("\r\n", "<br>").Replace("\n", "<br>").Replace("\r", "<br>")))</p>
-                <p class="action"><input class="btn js_start" data-id="@item.TeacherID" type="button" value="立即预约"></p>
-            </div>
-        </div>
-    }
-    <div class="lesson_list js_list">
+    <div class="lesson_banner" data-setting="htmlblocks" data-name="teachers">
+        @{ var blocks = SL.Web.Service.SettingService.GetHtmlBlocks("teachers"); }
+        @if (blocks != null)
+        {
+            foreach (var item in blocks)
+            {
+            @(new MvcHtmlString(item.Content))
+            }
+        }
+    </div>
+    <div class="lesson_list teacher_list js_list">
         @if (data == null || data.Count == 0)
         {
             <text><div style="padding: 50px; text-align: center;">暂无教师</div></text>
@@ -55,57 +51,73 @@
     </div>
 </div>
 <script>
-    seajs.use(['jquery','site/user'],function ($,user) {
+    seajs.use(['jquery','site/user','lib/popup'],function ($,user,popup) {
 
-        var player=videojs('really-cool-video',{},function () {
-        });
+        var player;
 
-        var video=$('.js_info').data('video');
-        if(!video) {
-            player.hide();
-            $('.js_info img').show();
-        }
-
-        user.loading('.js_start',function () {
-            var $btn=this;
-
-            return {
-                url: '/json/user/islogin',
-                success: function (res) {
-                    if(!res.isLogin) {
-                        user.showLogin();
-                    } else {
-                        location.href="/schedule.html?teacherid="+$btn.data('id');
-                    }
-                }
-            }
-        });
+        var teacherDialog,$info;
 
         $('.js_list').on('click','[data-id]',function (e) {
             var $target=$(e.currentTarget),
                 $info=$('.js_info'),
                 id=$target.data('id');
 
+            !teacherDialog&&(teacherDialog=new popup.Dialog({
+                title: '',
+                drag: false,
+                width: 759,
+                height: 487,
+                content: ['<div class="lesson_info teacher_info clearfix js_info" data-id="">',
+                        '<div class="img"><img src="" /><video id="really-cool-video" style="display:none;" class="video-js vjs-default-skin" controls preload="auto" width="302px" height="333" poster="" data-setup="{}">',
+                        '<source src="" type="video/mp4">',
+                        '</video></div>',
+                        '<div class="info"><p class="name"></p>',
+                        '<p class="con"></p>',
+                    '</div>',
+                '</div>',
+                '<p class="lesson_info_action"><input class="btn js_start" data-id="" type="button" value="立即预约"></p>'].join('')
+            }),
+            $info=teacherDialog.container.addClass('login_dialog').find('.lesson_info'),
+            user.loading('.js_start',function () {
+                var $btn=this;
+
+                return {
+                    url: '/json/user/islogin',
+                    success: function (res) {
+                        if(!res.isLogin) {
+                            teacherDialog.hide();
+                            user.showLogin();
+                        } else {
+                            location.href="/schedule.html?teacherid="+$btn.data('id');
+                        }
+                    }
+                }
+            }));
+
             if(id!=$info.data('id')) {
                 var video=$target.data('video'),
                     src=$target.data('src');
 
                 if(video) {
+                    !player&&(player=videojs('really-cool-video',{},function () {
+                    }));
                     player.src([{ type: "video/mp4",src: video}]);
                     $('.js_info img').hide();
                     player.poster(src);
                     player.show();
                 } else {
-                    player.hide();
+                    player&&player.hide();
                     $('.js_info img').show();
                 }
 
                 $('.js_start').data('id',id);
                 $info.data('id',id);
                 $info.find('img').attr('src',$target.data('src'));
-                $info.find('.name').html($target.find('.name').html());
+                $info.find('.name').html($target.find('.name').html()+":");
                 $info.find('.con').html($target.find('input').val());
             }
+
+            teacherDialog.show();
 
         });
     });

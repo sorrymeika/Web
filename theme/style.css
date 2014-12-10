@@ -101,19 +101,27 @@ a:hover { color: #999; }
 .footer a { color: #262c6a; }
 .footer .copyright { padding-top: 15px; line-height: 22px; color: #666; font-size: 12px; }
 
-.lesson_info { width: 940px; margin: 32px 20px 0 20px; background: #f6f6f6; }
-.lesson_info .img, .lesson_info .img img { width: 665px; height: 392px; float: left; }
-.lesson_info .info { float: right; width: 220px; margin: 30px 26px 0 0; }
-.lesson_info .name { font-size: 18px; color: #333; }
-.lesson_info .con { font-size: 14px; color: #333; line-height: 22px; height: 283px; overflow: hidden; overflow-y: auto; }
-.lesson_info .action { padding-top: 10px; }
+.lesson_info { margin: 10px 20px 0 20px; height: 580px; overflow-y: auto; }
+.lesson_info .img, .lesson_info .img img { width: 304px; height: 205px; float: left; _display: inline; }
+.lesson_info .img { margin: 20px 20px 20px 10px; }
+.lesson_info .name { font-size: 14px; color: #333; line-height: 22px;}
+.lesson_info .con { font-size: 14px; color: #333; line-height: 22px; overflow: hidden; overflow-y: auto; }
+.lesson_info_action { padding-top: 10px; text-align: center; }
+
+.teacher_info {padding-top:1px;height: 410px;}
+.teacher_info .img, .teacher_info .img img { width: 302px; height: 333px; float: left; }
+.teacher_info .info { margin-top: 20px; width: 301px; height: 333px; overflow-y: auto; padding: 20px; float: right; background:#f6f6f6; }
+
 
 .lesson_list { width: 940px; margin: 48px 20px 0 20px; overflow: hidden; }
 .lesson_list ul { width: 980px; overflow: hidden; }
 .lesson_list ul li { float: left; width: 216px; height: 271px; margin-right: 25px; _display: inline; overflow: hidden; }
 .lesson_list ul li img { width: 216px; height: 133px; }
-.lesson_list li .name { font-size: 14px; color: #333; margin-top: 15px; }
+.lesson_list li .name { font-size: 14px; color: #262c6a; margin-top: 15px; }
 .lesson_list li .con { font-size: 12px; color: #333; line-height: 22px; height: 90px; overflow: hidden; }
+
+.teacher_list ul li img { width: 216px; height: 247px; }
+.teacher_list ul li  { width: 216px; height: 385px; }
 
 .d_login { float: left; width: 362px; border-right: 1px solid #cdcdcd; }
 .d_login .bd, .d_register .bd { padding: 40px 0 0 30px; }
@@ -180,7 +188,14 @@ img.validcode { height: 24px; vertical-align: middle; margin-left: 4px; }
 
 .contact_us { float: right; width: 316px; height: 242px; background: url(images/contact_us.jpg) no-repeat; margin-top: 35px; }
 
-.userinfo { margin: 30px 0 0 30px; line-height: 25px; color: #28296a; height: 500px; }
+.userinfo { margin: 30px 0 0 30px; line-height: 25px; color: #262c6a; height: 500px; }
 
 .schedule .news_content { width: 770px; }
 .news_content .schedule_list { margin-top: 0px; }
+
+.lesson_banner { padding: 23px 60px; background:#f6f6f6; width: 820px; margin: 32px auto 0 auto; line-height: 22px;}
+
+.news_list li { margin-bottom: 30px; border-bottom: 1px solid #cdcdcd;}
+.news_list .con{ line-height: 30px; }
+.news_list li .more { height: 30px; text-align: right; color: #262c6a; font-size: 12px;}
+.news_list li .more a { color: #262c6a; }

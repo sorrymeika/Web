@@ -14,13 +14,17 @@ namespace SL.Web.Service
 
             if (null != data)
             {
-                data.All(a =>
+                return data.Select(a => new SL.Web.Model.Image
                 {
-                    a.Src = SL.Util.RequestFile.GetCompressedImageSrc(a.Src);
-                    return true;
-                });
+                    ID = a.ID,
+                    Title = a.Title,
+                    Description = a.Description,
+                    Url = a.Url,
+                    Src = SL.Util.RequestFile.FullUrl(a.Src),
+                    Thumbnail = SL.Util.RequestFile.GetCompressedImageSrc(a.Src),
+                    Sort = a.Sort
 
-                return data.OrderByDescending(a => a.Sort).ToList();
+                }).OrderByDescending(a => a.Sort).ToList();
             }
             return data;
         }
@@ -28,6 +32,15 @@ namespace SL.Web.Service
         public static IList<SL.Web.Model.Link> GetLinks(string name)
         {
             var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.Link>(name + "Link");
+
+            var data = settingUtil.Get();
+
+            return data;
+        }
+
+        public static IList<SL.Web.Model.HtmlBlock> GetHtmlBlocks(string name)
+        {
+            var settingUtil = new SL.Util.SettingUtil<SL.Web.Model.HtmlBlock>(name + "HtmlBlock");
 
             var data = settingUtil.Get();
 

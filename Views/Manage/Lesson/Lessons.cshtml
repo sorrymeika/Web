@@ -7,6 +7,7 @@
     {
         string lessonName = req.String("lessonName", false, "need title");
         string description = req.String("description", false, "need description");
+        int lessonType = req.Int("lessonType", false, "need lessonType");
         decimal price = req.Decimal("price", false, "need price");
         decimal totalPrice = req.Decimal("totalPrice", false, "need totalprice");
         var cover = req.File("cover");
@@ -20,7 +21,7 @@
 
         string src = cover.IsEmpty ? null : cover.Save();
 
-        SQL.Execute("insert into Lesson (LessonName,Cover,Description,Sort,Price,TotalPrice) values (@p0,@p1,@p2,@p3,@p4,@p5)", lessonName, src, description, sort, price, totalPrice);
+        SQL.Execute("insert into Lesson (LessonName,Cover,Description,Sort,Price,TotalPrice,[Type]) values (@p0,@p1,@p2,@p3,@p4,@p5,@p6)", lessonName, src, description, sort, price, totalPrice, lessonType);
 
         HtmlUtil.Output(new { success = true });
         return;
@@ -85,6 +86,7 @@
     else if ("query" == Request.QueryString["action"])
     {
         string keywords = req.String("keywords");
+        string lessonType = req.String("lessonType");
 
         string where = "1=1";
         List<object> parameters = new List<object>();
@@ -95,7 +97,13 @@
             parameters.Add(keywords);
         }
 
-        var data = SQL.Query("select LessonID,LessonName,Cover,Description,Sort,Price,TotalPrice from Lesson where " + where + " order by Sort desc", parameters.ToArray());
+        if (!string.IsNullOrEmpty(lessonType))
+        {
+            where += " and ([Type]=@p" + parameters.Count + ")";
+            parameters.Add(req.Int("lessonType"));
+        }
+
+        var data = SQL.Query("select LessonID,LessonName,Cover,Description,Sort,Price,TotalPrice,[Type] from Lesson where " + where + " order by Sort desc", parameters.ToArray());
 
         if (data != null)
         {
@@ -123,8 +131,8 @@
         var addingDialog=new popup.Form({
             url: '?action=add',
             title: '添加课程',
-            width: 600,
-            height: 300,
+            width: 700,
+            height: 400,
             controls: {
                 lessonType: {
                     label: '课程类型',
@@ -170,6 +178,9 @@
                 },
                 description: {
                     label: '课程描述',
+                    labelVAlign: 'top',
+                    width: 500,
+                    height: 300,
                     type: 'textarea',
                     emptyAble: false,
                     emptyText: '请填写正文'
@@ -204,8 +215,8 @@
         var modifyingDialog=new popup.Form({
             url: '?action=modify',
             title: '修改课程',
-            width: 600,
-            height: 300,
+            width: 700,
+            height: 400,
             controls: {
                 id: {
                     type: 'hidden'
@@ -244,6 +255,9 @@
                 description: {
                     label: '课程描述',
                     type: 'textarea',
+                    labelVAlign: 'top',
+                    width: 500,
+                    height: 300,
                     emptyAble: false,
                     emptyText: '请填写正文'
                 }
@@ -322,6 +336,17 @@
         var grid=$('#grid').grid({
             search: {
                 data: {
+                    lessonType: {
+                        label: '课程类型',
+                        type: 'select',
+                        options: [{
+                            text: '普通课程',
+                            value: 1
+                        },{
+                            text: '测试课程',
+                            value: 0
+                        }]
+                    },
                     keywords: {
                         label: '关键字',
                         type: 'text'
@@ -347,6 +372,13 @@
                 text: '课程描述',
                 bind: 'Description',
                 width: 10
+            },{
+                text: '课程类型',
+                bind: 'Type',
+                width: 6,
+                render: function (cell,data) {
+                    cell.append(data.Type==1?"普通课程":"测试课程");
+                }
             },{
                 text: '排序',
                 bind: 'Sort',
