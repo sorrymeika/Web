@@ -110,3 +110,13 @@ alter table Reservation add Price decimal(18,2)
 alter table Reservation add [Status] int
 
 
+--2014-12-14
+alter table Users add Gender bit
+alter table Users add Parents varchar(10)
+alter table Users add EnglishName varchar(20)
+alter table Users add WeChatName varchar(50)
+alter table Users add School varchar(400)
+alter table Users add Address varchar(400)
+
+
+select * from Users where Mobile='12345678901'
